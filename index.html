@@ -52,6 +52,10 @@ footer{max-width:980px;margin:6px auto 18px;padding:8px 12px;opacity:.8;font-siz
     </div>
   </div>
 
+  <!-- 👇 this is where the upload button should live -->
+  <input type="file" id="fileInput" accept=".json,.jsonl,.csv"
+         style="margin:8px auto;display:block;color:#fff;">
+
   <div id="panels">
     <div class="panel">
       <h3>📜 Play Log</h3>
@@ -77,186 +81,57 @@ footer{max-width:980px;margin:6px auto 18px;padding:8px 12px;opacity:.8;font-siz
 <div id="contextNote">Synthetic replay · no live athlete data</div>
 
 <script>
-/* ====== State & Elements ====== */
-const trust=document.getElementById('trustBadge');
-const logEl=document.getElementById('dataLog');
-const nextBtn=document.getElementById('nextPlay');
-const coachBtn=document.getElementById('toggleCoach');
-const motionBtn=document.getElementById('toggleMotion');
-const speedRange=document.getElementById('speedRange');
-const speedVal=document.getElementById('speedVal');
-const canvas=document.getElementById('field'), ctx=canvas.getContext('2d');
+/* your existing Phase III script (unchanged) ... */
 
-let reduceMotion=false, coachMode=false, animRAF=null, plays=[], currentPlay=-1;
-let speed=1.0;
+/* =======================================================
+   🛰️  Synthetic Live-Feed Uploader + Stream Simulator
+   ======================================================= */
+document.getElementById('fileInput').onchange = async (e)=>{
+  const file = e.target.files[0];
+  if(!file){ log('No file selected','warn'); return; }
 
-/* Box score state */
-const boxScore = { plays:0, yards:0, first:0, comp:0, att:0, rush:0 };
-function updateBox(){
-  document.getElementById('bs_plays').textContent = boxScore.plays;
-  document.getElementById('bs_yards').textContent = boxScore.yards;
-  document.getElementById('bs_first').textContent = boxScore.first;
-  document.getElementById('bs_pass').textContent = `${boxScore.comp}/${boxScore.att}`;
-  document.getElementById('bs_rush').textContent = boxScore.rush;
-}
+  const text = await file.text();
+  const lines = text.trim().split('\n');
+  const frames = lines.map(l=>{
+    try { return JSON.parse(l); } catch { return null; }
+  }).filter(Boolean);
 
-/* ====== UI Handlers ====== */
-motionBtn.onclick=()=>{ reduceMotion=!reduceMotion;
-  motionBtn.textContent=`Reduce Motion ${reduceMotion?'ON':'OFF'}`; };
-coachBtn.onclick=()=>{ coachMode=!coachMode;
-  coachBtn.textContent=`Coach Mode ${coachMode?'ON':'OFF'}`; drawField(); };
-speedRange.oninput = ()=>{ speed = parseFloat(speedRange.value); speedVal.textContent = speed.toFixed(2)+'×'; };
+  log(`Loaded ${frames.length} telemetry frames from synthetic tracker feed.`,'info');
+  simulateStream(frames);
+};
 
-/* ====== Logging ====== */
-function log(msg, cls=''){ const d=document.createElement('div'); d.className=cls; d.textContent=msg; logEl.prepend(d); }
-
-/* ====== Field Drawing (normalized 0–100 x 0–53 approx) ====== */
-function drawField(){
-  const w=canvas.width, h=canvas.height;
-  ctx.clearRect(0,0,w,h);
-  const grad=ctx.createLinearGradient(0,0,0,h);
-  grad.addColorStop(0,"#0b6623"); grad.addColorStop(1,"#0a4f1a");
-  ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
-  ctx.strokeStyle='rgba(255,255,255,.45)';
-  ctx.lineWidth=1;
-  // horizontal stripes 5-yd
-  for(let y=0;y<=10;y++){ const yy=y*(h/10); ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(w,yy); ctx.stroke(); }
-  // vertical 10-yd lines
-  for(let x=0;x<=10;x++){ const xx=x*(w/10); ctx.beginPath(); ctx.moveTo(xx,0); ctx.lineTo(xx,h); ctx.stroke(); }
-}
-
-/* ====== Helper: coords mapping ====== */
-function mapX(x){ return (x/10)*canvas.width*0.9 + 40; }     // padding
-function mapY(y){ return canvas.height - (y/5)*canvas.height*0.8 - 40; }
-
-/* ====== Pulse Badge ====== */
-function pulse(){ trust.classList.remove('badgePulse'); void trust.offsetWidth; trust.classList.add('badgePulse'); }
-
-/* ====== Load Plays ====== */
-async function loadPlays(){
-  const res = await fetch('plays.json?v='+Date.now());
-  plays = await res.json();
-  log(`Loaded ${plays.length} synthetic plays.`,'info');
-}
-loadPlays();
-
-/* ====== Render Engine ====== */
-async function runPlay(){
-  if(!plays.length){ log('No plays loaded yet...','warn'); return; }
-  currentPlay = (currentPlay+1) % plays.length;
-  const p = plays[currentPlay];
-  drawField();
-  pulse();
-  log(`🏈 Q${p.quarter} ${p.clock} — ${p.down}&${p.distance} at ${p.yard_line}`,'info');
-  log(`🧩 ${p.team}: ${p.description}`,'ok');
-
-  // Update box score counters (prelim attempts)
-  boxScore.plays += 1;
-  if(p.type.startsWith('pass')) boxScore.att += 1;
-  if(p.type==='run') boxScore.rush += 1;
-  if(p.first_down) boxScore.first += 1;
-  boxScore.yards += (p.yards||0);
-  updateBox();
-
-  try{
-    const [ballRes, playerRes] = await Promise.all([
-      fetch(p.balltrack+'?v='+Date.now()),
-      fetch(p.players+'?v='+Date.now())
-    ]);
-    const ball = await ballRes.json();
-    const squad = await playerRes.json();
-    if(p.complete) { boxScore.comp += 1; updateBox(); }
-    renderPlay(ball, squad);
-  }catch(e){ log('Error loading play assets','warn'); }
-}
-
-function renderPlay(ball, playersData){
-  const m=ball.metadata||{};
-  trust.style.background = m.trust_badge_color || '#72B6E5';
-  trust.textContent = `Visible Truth • ${(m.latency_s||1.5)}s Delay ${m.consent?'✓':'✗'}`;
-
-  const pts = (ball.trajectory||[]).map(t=>({ x:mapX(t.x), y:mapY(t.y) }));
-  const players = (playersData.players||[]).map(p=>({
-    id:p.id, role:p.role, color:p.color,
-    path:p.path.map(pt=>({x:mapX(pt.x), y:mapY(pt.y)}))
-  }));
-
-  let i=0;
-  const trailLen = 8; // ghost frames
-  const ballTrail = [];
-  const playerTrails = players.map(()=>[]);
-
-  function frame(){
-    drawField();
-
-    // draw trails (fading)
-    ctx.globalAlpha = 0.25;
-    ballTrail.forEach((pt, idx)=>{
-      const a = (idx+1)/ballTrail.length;
-      ctx.beginPath(); ctx.arc(pt.x, pt.y, 2+a*2, 0, Math.PI*2);
-      ctx.fillStyle = '#ffd97a'; ctx.fill();
-    });
-    ctx.globalAlpha = 1.0;
-
-    // ball path (current)
-    if(pts.length){
-      ctx.beginPath();
-      ctx.strokeStyle='#ffd97a'; ctx.lineWidth=3;
-      ctx.moveTo(pts[0].x, pts[0].y);
-      ctx.lineTo(pts[Math.min(i, pts.length-1)].x, pts[Math.min(i, pts.length-1)].y);
-      ctx.stroke();
-    }
-
-    // sponsor sparkle
-    if(ball.sponsor && ball.sponsor.active && i%2===0 && pts[i]){
-      ctx.beginPath(); ctx.arc(pts[i].x, pts[i].y, 2, 0, Math.PI*2);
-      ctx.fillStyle = ball.sponsor.trail_color || '#FFD97A'; ctx.fill();
-    }
-
-    // players
-    players.forEach((pl, idx)=>{
-      const f = pl.path[Math.min(i, pl.path.length-1)] || pl.path.at(-1);
-      // update trail
-      const pt = {x:f.x, y:f.y};
-      const tarr = playerTrails[idx];
-      tarr.push(pt); if(tarr.length>trailLen) tarr.shift();
-
-      // draw trails
-      ctx.globalAlpha = 0.22;
-      tarr.forEach((tp, j)=>{
-        const a = (j+1)/tarr.length;
-        ctx.beginPath(); ctx.arc(tp.x, tp.y, 3+a*1.5, 0, Math.PI*2);
-        ctx.fillStyle = pl.color; ctx.fill();
-      });
-      ctx.globalAlpha = 1.0;
-
-      // draw dot + label
-      ctx.beginPath(); ctx.arc(f.x, f.y, 6, 0, Math.PI*2);
-      ctx.fillStyle = pl.color; ctx.fill();
-      ctx.font='10px Inter'; ctx.fillText(pl.id, f.x+8, f.y+3);
-    });
-
-    // push ball trail
-    if(pts[i]){ ballTrail.push({x:pts[i].x,y:pts[i].y}); if(ballTrail.length>trailLen) ballTrail.shift(); }
-
-    // advance
-    if(reduceMotion) i = pts.length;
-    else i += Math.max(1, Math.round(speed)); // speed multiplier
-
-    if(i < Math.max(pts.length, ...players.map(p=>p.path.length))){
-      animRAF = requestAnimationFrame(frame);
-    }else{
-      setTimeout(()=>log('Awaiting next synthetic feed …','info'), 700);
-    }
+function simulateStream(frames){
+  let i = 0;
+  const total = frames.length;
+  log('Beginning synthetic data loop ...','info');
+  const tickRate = 100; // 10 Hz
+  function tick(){
+    const frame = frames[i];
+    drawTelemetryFrame(frame.entities);
+    i++;
+    if(i < total) setTimeout(tick, tickRate);
+    else log('Synthetic feed complete','ok');
   }
-  frame();
+  tick();
 }
 
-/* ====== Boot ====== */
-nextBtn.onclick = runPlay;
-drawField();
-updateBox();
-log('Ready · tap “📡 Engage Synthetic Play” to begin.','info');
+function drawTelemetryFrame(entities){
+  drawField();
+  entities.forEach(ent=>{
+    const x = (ent.x/100)*canvas.width;
+    const y = canvas.height - (ent.y/53.3)*canvas.height;
+    let color = '#FFFFFF';
+    if(ent.id==='BALL') color = '#FFD97A';
+    else if(ent.team==='GB') color = '#00FF70';
+    else if(ent.team==='CHI') color = '#72B6E5';
+    ctx.beginPath();
+    ctx.arc(x, y, ent.id==='BALL'?5:4, 0, Math.PI*2);
+    ctx.fillStyle = color; ctx.fill();
+    if(coachMode && ent.id!=='BALL'){
+      ctx.font='10px Inter'; ctx.fillText(ent.id, x+6, y+3);
+    }
+  });
+}
 </script>
 </body>
 </html>
