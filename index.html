@@ -132,6 +132,15 @@ function drawTelemetryFrame(entities){
     }
   });
 }
+// TEMP: Auto-load sample feed for testing if upload fails
+fetch('synthetic_feed.jsonl')
+  .then(r=>r.text())
+  .then(text=>{
+    const frames = text.trim().split('\n').map(l=>JSON.parse(l));
+    log(`Auto-loaded ${frames.length} frames from repo for test.`, 'info');
+    simulateStream(frames);
+  })
+  .catch(()=>log('No synthetic_feed.jsonl found in repo. Upload manually.','warn'));
 </script>
 </body>
 </html>
