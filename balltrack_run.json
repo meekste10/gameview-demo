@@ -1,0 +1,7 @@
+{
+  "metadata": {"mode": "synthetic", "latency_s": 1.2, "consent": true, "trust_badge_color": "#9AEBA3"},
+  "trajectory": [
+    {"x":0,"y":0},{"x":0.5,"y":0.2},{"x":1.0,"y":0.3},{"x":1.5,"y":0.4},{"x":2.0,"y":0.5}
+  ],
+  "sponsor": {"active": false, "trail_color": "#FFFFFF"}
+}
