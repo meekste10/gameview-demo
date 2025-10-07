@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-label="GameView — Core Entities Matrix">
+<rect x="0" y="0" width="1920" height="1080" fill="#FFFFFF" />
+<text x="100" y="50" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="36" font-weight="700" fill="#1F2933" text-anchor="start">GAMEVIEW — CORE ENTITIES MATRIX</text>
+<text x="100" y="78" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="18" font-weight="normal" fill="#3E4C59" text-anchor="start">Practice-first · risk-controlled · tiered for Prototype → Pilot → Visionary</text>
+<rect x="100" y="120" width="380" height="220" rx="10" fill="#FFFFFF" stroke="#FFD97A" stroke-width="2"/>
+<text x="114" y="148" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600" fill="#1F2933" text-anchor="start">🧍‍♂ Player (RFID-rooted)</text>
+<text x="114" y="176" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Inputs:</text>
+<text x="190" y="176" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">RFID/UWB tag · pose estimation · helmet-cam sync</text>
+<text x="114" y="202" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Data:</text>
+<text x="170" y="202" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Position · Velocity · Acceleration · Orientation</text>
+<text x="114" y="228" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Outputs:</text>
+<text x="190" y="228" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Digital-twin animation</text>
+<text x="190" y="248" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Predictive Shadow</text>
+<text x="190" y="268" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Emotion tempo glow</text>
+<text x="190" y="288" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Fatigue dimmer</text>
+<text x="190" y="308" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Impact halo</text>
+<rect x="100" y="358" width="380" height="220" rx="10" fill="#FFFFFF" stroke="#FFD97A" stroke-width="2"/>
+<text x="114" y="386" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600" fill="#1F2933" text-anchor="start">🏈 Ball (RFID-tagged)</text>
+<text x="114" y="414" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Inputs:</text>
+<text x="190" y="414" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">RFID sensor · radar · accelerometer</text>
+<text x="114" y="440" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Data:</text>
+<text x="170" y="440" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Position · Spin vector · Launch angle</text>
+<text x="114" y="466" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Outputs:</text>
+<text x="190" y="466" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Seat-aligned AR arc</text>
+<text x="190" y="486" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Predictive intercept</text>
+<text x="190" y="506" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Spin aura</text>
+<text x="190" y="526" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Sponsor trail</text>
+<rect x="100" y="596" width="380" height="220" rx="10" fill="#FFFFFF" stroke="#FFD97A" stroke-width="2"/>
+<text x="114" y="624" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600" fill="#1F2933" text-anchor="start">🧑‍🏫 Coaches / Staff</text>
+<text x="114" y="652" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Inputs:</text>
+<text x="190" y="652" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Beacon badges · audio · gesture CV</text>
+<text x="114" y="678" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Data:</text>
+<text x="170" y="678" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Zone position · Gesture events</text>
+<text x="114" y="704" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Outputs:</text>
+<text x="190" y="704" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Emotion field</text>
+<text x="190" y="724" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Play-call ghost trail</text>
+<text x="190" y="744" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Bench morale map</text>
+<rect x="520" y="120" width="380" height="220" rx="10" fill="#FFFFFF" stroke="#FFD97A" stroke-width="2"/>
+<text x="534" y="148" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600" fill="#1F2933" text-anchor="start">🧍‍♂ Officials / Equipment</text>
+<text x="534" y="176" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Inputs:</text>
+<text x="610" y="176" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">RFID markers · whistle CV · accelerometer</text>
+<text x="534" y="202" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Data:</text>
+<text x="590" y="202" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Object position · Signal timestamp</text>
+<text x="534" y="228" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Outputs:</text>
+<text x="610" y="228" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">3-D chain hologram</text>
+<text x="610" y="248" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Penalty cone</text>
+<text x="610" y="268" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Ref LOS bubble</text>
+<rect x="520" y="358" width="380" height="220" rx="10" fill="#FFFFFF" stroke="#FFD97A" stroke-width="2"/>
+<text x="534" y="386" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600" fill="#1F2933" text-anchor="start">🧭 Spatial Anchors Suite</text>
+<text x="534" y="414" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Inputs:</text>
+<text x="610" y="414" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Yardlines · SkyCam pose · lighting sensors</text>
+<text x="534" y="440" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Data:</text>
+<text x="590" y="440" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Fixed coords · Orientation matrix</text>
+<text x="534" y="466" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Outputs:</text>
+<text x="610" y="466" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Unified field grid</text>
+<text x="610" y="486" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Seat QR calibration</text>
+<text x="610" y="506" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Adaptive rendering</text>
+<rect x="520" y="596" width="380" height="220" rx="10" fill="#FFFFFF" stroke="#FFD97A" stroke-width="2"/>
+<text x="534" y="624" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600" fill="#1F2933" text-anchor="start">🪪 Identity Binding</text>
+<text x="534" y="652" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Inputs:</text>
+<text x="610" y="652" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Player tag ↔ roster · consent ledger</text>
+<text x="534" y="678" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Data:</text>
+<text x="590" y="678" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Name · Role · Privacy flag</text>
+<text x="534" y="704" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Outputs:</text>
+<text x="610" y="704" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Consent-aware rendering</text>
+<text x="610" y="724" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Trust Badge</text>
+<text x="610" y="744" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Signature intros</text>
+<rect x="940" y="120" width="380" height="220" rx="10" fill="#FFFFFF" stroke="#FFD97A" stroke-width="2"/>
+<text x="954" y="148" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600" fill="#1F2933" text-anchor="start">🕹️ Spatial Binding</text>
+<text x="954" y="176" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Inputs:</text>
+<text x="1030" y="176" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">SkyCam pose + Seat QR scan</text>
+<text x="954" y="202" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Data:</text>
+<text x="1010" y="202" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">3-D transform · Seat perspective</text>
+<text x="954" y="228" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Outputs:</text>
+<text x="1030" y="228" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Seat-synced calibration</text>
+<text x="1030" y="248" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Auto FOV lock</text>
+<rect x="940" y="358" width="380" height="220" rx="10" fill="#FFFFFF" stroke="#FFD97A" stroke-width="2"/>
+<text x="954" y="386" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600" fill="#1F2933" text-anchor="start">⏱️ Temporal Binding</text>
+<text x="954" y="414" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Inputs:</text>
+<text x="1030" y="414" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Game clock · latency metrics</text>
+<text x="954" y="440" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Data:</text>
+<text x="1010" y="440" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Timecode offset · Packet loss</text>
+<text x="954" y="466" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Outputs:</text>
+<text x="1030" y="466" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Bullet-time scrub</text>
+<text x="1030" y="486" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Ghost trail compare</text>
+<text x="1030" y="506" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Multi-view sync</text>
+<rect x="940" y="596" width="380" height="220" rx="10" fill="#FFFFFF" stroke="#FFD97A" stroke-width="2"/>
+<text x="954" y="624" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="600" fill="#1F2933" text-anchor="start">⚙️ Event Semantics</text>
+<text x="954" y="652" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Inputs:</text>
+<text x="1030" y="652" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Whistle + ball + collision fusion</text>
+<text x="954" y="678" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Data:</text>
+<text x="1010" y="678" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="normal" fill="#1F2933" text-anchor="start">Event labels · Confidence</text>
+<text x="954" y="704" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="600" fill="#1F2933" text-anchor="start">Outputs:</text>
+<text x="1030" y="704" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">AI highlight composer</text>
+<text x="1030" y="724" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="15" font-weight="normal" fill="#1F2933" text-anchor="start">Narrative captioning</text>
+<text x="100" y="1060" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="14" font-weight="normal" fill="#5C6B73" text-anchor="start">Practice-only boundary · 1–2 s latency target · Ethics as design · Fan agency loop · Modular system feeds Replay / Predictive / Commerce</text>
+</svg>

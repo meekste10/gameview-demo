@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <circle cx="60" cy="60" r="54" fill="#FFFFFF" stroke="#B3C3CF" stroke-width="6"/>
+  <path d="M60 15 L100 35 L100 85 L60 105 L20 85 L20 35 Z"
+        fill="none" stroke="#FFD97A" stroke-width="4"/>
+  <circle cx="60" cy="60" r="20" fill="#72B6E5"/>
+  <text x="60" y="66" text-anchor="middle" font-family="Inter, Helvetica" font-size="20" fill="#333333">✓</text>
+</svg>
