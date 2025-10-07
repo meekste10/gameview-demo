@@ -3,150 +3,259 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>GameView — Ethical Telemetry Prototype</title>
+<title>GameView — Ethical Telemetry Prototype (Phase III)</title>
 <style>
-:root {
-  --charcoal:#101820;--gold:#ffd97a;--sky:#72b6e5;
-  --field1:#0b6623;--field2:#0a4f1a;
-}
-body{margin:0;background:var(--charcoal);color:#fff;
-     font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
-header{padding:14px 16px;border-bottom:2px solid #223;
-       display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
-h1{font-size:18px;margin:0;}
-.badge{background:var(--sky);color:#000;font-weight:700;
-       padding:6px 10px;border-radius:10px;transition:opacity .5s;}
-#wrap{max-width:900px;margin:0 auto;}
-canvas{width:100%;aspect-ratio:2/1;background:linear-gradient(var(--field1),var(--field2));
-       border:4px solid var(--gold);border-radius:10px;display:block;}
-#controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0;}
-button{flex:1 1 180px;padding:14px 16px;font-size:16px;font-weight:700;
-       border:0;border-radius:10px;}
-#nextPlay{background:var(--gold);color:#000;}
-.toggle{background:#1f2937;color:#fff;border:1px solid #334155;}
-#dataLog{max-width:900px;margin:10px auto;padding:10px 12px;
-         border:1px solid #233;border-radius:8px;background:#0e1420;
-         font-size:14px;line-height:1.35;max-height:180px;overflow:auto;}
+:root { --charcoal:#101820;--gold:#ffd97a;--sky:#72b6e5;--field1:#0b6623;--field2:#0a4f1a; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--charcoal);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+header{padding:12px 14px;border-bottom:2px solid #223;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:18px;margin:0}
+.badge{background:var(--sky);color:#000;font-weight:700;padding:6px 10px;border-radius:10px;transition:opacity .5s}
+#wrap{max-width:980px;margin:0 auto;padding:10px}
+canvas{width:100%;aspect-ratio:2/1;background:linear-gradient(var(--field1),var(--field2));border:4px solid var(--gold);border-radius:10px;display:block}
+#controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+button{flex:1 1 160px;padding:12px 14px;font-size:15px;font-weight:700;border:0;border-radius:10px}
+#nextPlay{background:var(--gold);color:#000}
+.toggle{background:#1f2937;color:#fff;border:1px solid #334155}
+#speedWrap{flex:1 1 100%;display:flex;align-items:center;gap:10px;justify-content:center;color:#cfe4ff}
+#speedRange{width:60%}
+#panels{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}
+.panel{flex:1 1 300px;background:#0e1420;border:1px solid #233;border-radius:8px;padding:10px;min-height:120px}
+.panel h3{margin:0 0 6px 0;font-size:14px;color:#c6e2ff}
+#dataLog{max-height:160px;overflow:auto;font-size:13px;line-height:1.35}
 .ok{color:#94f7c5}.info{color:#c6e2ff}.warn{color:#ffdf99}
-footer{max-width:900px;margin:0 auto 18px;padding:8px 12px;opacity:.8;font-size:12px;color:#bcd;}
-#contextNote{position:fixed;bottom:6px;right:10px;font-size:11px;
-             background:rgba(16,24,32,.65);padding:6px 8px;border-radius:6px;color:#9cc;z-index:99;}
+#boxScoreTable{width:100%;border-collapse:collapse;font-size:13px}
+#boxScoreTable th,#boxScoreTable td{border-bottom:1px solid #233;padding:6px 4px;text-align:left}
+footer{max-width:980px;margin:6px auto 18px;padding:8px 12px;opacity:.8;font-size:12px;color:#bcd}
+#contextNote{position:fixed;bottom:6px;right:10px;font-size:11px;background:rgba(16,24,32,.65);padding:6px 8px;border-radius:6px;color:#9cc;z-index:99}
+.badgePulse{animation:pulse 1.2s ease 1}
+@keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
 </style>
 </head>
 <body>
 <header>
-  <h1>🏈 GameView — Data Becomes Drama</h1>
+  <h1>🏈 GameView — Data Becomes Drama (Phase III)</h1>
   <div class="badge" id="trustBadge">Visible Truth • 1.5 s Delay ✓</div>
 </header>
 
 <div id="wrap">
-  <canvas id="field" width="900" height="450"></canvas>
+  <canvas id="field" width="980" height="490"></canvas>
+
   <div id="controls">
     <button id="nextPlay">📡 Engage Synthetic Play</button>
     <button id="toggleCoach" class="toggle">Coach Mode OFF</button>
     <button id="toggleMotion" class="toggle">Reduce Motion OFF</button>
+    <div id="speedWrap">
+      <span>Playback Speed</span>
+      <input type="range" id="speedRange" min="0.25" max="2.00" step="0.25" value="1.00">
+      <span id="speedVal">1.00×</span>
+    </div>
   </div>
-  <div id="dataLog" aria-live="polite"></div>
+
+  <div id="panels">
+    <div class="panel">
+      <h3>📜 Play Log</h3>
+      <div id="dataLog" aria-live="polite"></div>
+    </div>
+    <div class="panel">
+      <h3>📊 Box Score (Synthetic)</h3>
+      <table id="boxScoreTable">
+        <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Plays</td><td id="bs_plays">0</td></tr>
+          <tr><td>Total Yards</td><td id="bs_yards">0</td></tr>
+          <tr><td>First Downs</td><td id="bs_first">0</td></tr>
+          <tr><td>Pass (C/Att)</td><td id="bs_pass">0/0</td></tr>
+          <tr><td>Rush Attempts</td><td id="bs_rush">0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <footer>© 2025 GameView LLC • Ethics-as-UX Demo • Practice Data Only</footer>
 <div id="contextNote">Synthetic replay · no live athlete data</div>
 
 <script>
-/* ---------- State ---------- */
-const trust=document.getElementById('trustBadge'),
-      logEl=document.getElementById('dataLog'),
-      nextBtn=document.getElementById('nextPlay'),
-      coachBtn=document.getElementById('toggleCoach'),
-      motionBtn=document.getElementById('toggleMotion'),
-      canvas=document.getElementById('field'),ctx=canvas.getContext('2d');
-let reduceMotion=false,coachMode=false,animRAF=null;
+/* ====== State & Elements ====== */
+const trust=document.getElementById('trustBadge');
+const logEl=document.getElementById('dataLog');
+const nextBtn=document.getElementById('nextPlay');
+const coachBtn=document.getElementById('toggleCoach');
+const motionBtn=document.getElementById('toggleMotion');
+const speedRange=document.getElementById('speedRange');
+const speedVal=document.getElementById('speedVal');
+const canvas=document.getElementById('field'), ctx=canvas.getContext('2d');
 
-/* ---------- Draw field on normalized grid (0–100x0–53) ---------- */
+let reduceMotion=false, coachMode=false, animRAF=null, plays=[], currentPlay=-1;
+let speed=1.0;
+
+/* Box score state */
+const boxScore = { plays:0, yards:0, first:0, comp:0, att:0, rush:0 };
+function updateBox(){
+  document.getElementById('bs_plays').textContent = boxScore.plays;
+  document.getElementById('bs_yards').textContent = boxScore.yards;
+  document.getElementById('bs_first').textContent = boxScore.first;
+  document.getElementById('bs_pass').textContent = `${boxScore.comp}/${boxScore.att}`;
+  document.getElementById('bs_rush').textContent = boxScore.rush;
+}
+
+/* ====== UI Handlers ====== */
+motionBtn.onclick=()=>{ reduceMotion=!reduceMotion;
+  motionBtn.textContent=`Reduce Motion ${reduceMotion?'ON':'OFF'}`; };
+coachBtn.onclick=()=>{ coachMode=!coachMode;
+  coachBtn.textContent=`Coach Mode ${coachMode?'ON':'OFF'}`; drawField(); };
+speedRange.oninput = ()=>{ speed = parseFloat(speedRange.value); speedVal.textContent = speed.toFixed(2)+'×'; };
+
+/* ====== Logging ====== */
+function log(msg, cls=''){ const d=document.createElement('div'); d.className=cls; d.textContent=msg; logEl.prepend(d); }
+
+/* ====== Field Drawing (normalized 0–100 x 0–53 approx) ====== */
 function drawField(){
-  const w=canvas.width,h=canvas.height;
+  const w=canvas.width, h=canvas.height;
   ctx.clearRect(0,0,w,h);
   const grad=ctx.createLinearGradient(0,0,0,h);
-  grad.addColorStop(0,"#0b6623");grad.addColorStop(1,"#0a4f1a");
-  ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
-  ctx.strokeStyle='rgba(255,255,255,.5)';
-  for(let y=0;y<=10;y++){ // horizontal stripes (5-yard increments)
-    const yy=y*(h/10);
-    ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(w,yy);ctx.stroke();
-  }
-  for(let x=0;x<=10;x++){ // vertical yardlines (10-yard)
-    const xx=x*(w/10);
-    ctx.beginPath();ctx.moveTo(xx,0);ctx.lineTo(xx,h);ctx.stroke();
-  }
+  grad.addColorStop(0,"#0b6623"); grad.addColorStop(1,"#0a4f1a");
+  ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle='rgba(255,255,255,.45)';
+  ctx.lineWidth=1;
+  // horizontal stripes 5-yd
+  for(let y=0;y<=10;y++){ const yy=y*(h/10); ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(w,yy); ctx.stroke(); }
+  // vertical 10-yd lines
+  for(let x=0;x<=10;x++){ const xx=x*(w/10); ctx.beginPath(); ctx.moveTo(xx,0); ctx.lineTo(xx,h); ctx.stroke(); }
 }
 
-/* ---------- Logging ---------- */
-function log(msg,cls=''){const d=document.createElement('div');
-  d.className=cls;d.textContent=msg;logEl.prepend(d);}
+/* ====== Helper: coords mapping ====== */
+function mapX(x){ return (x/10)*canvas.width*0.9 + 40; }     // padding
+function mapY(y){ return canvas.height - (y/5)*canvas.height*0.8 - 40; }
 
-/* ---------- UI Toggles ---------- */
-motionBtn.onclick=()=>{reduceMotion=!reduceMotion;
-  motionBtn.textContent=`Reduce Motion ${reduceMotion?'ON':'OFF'}`;};
-coachBtn.onclick=()=>{coachMode=!coachMode;
-  coachBtn.textContent=`Coach Mode ${coachMode?'ON':'OFF'}`;drawField();};
+/* ====== Pulse Badge ====== */
+function pulse(){ trust.classList.remove('badgePulse'); void trust.offsetWidth; trust.classList.add('badgePulse'); }
 
-/* ---------- Helper ---------- */
-function pulseBadge(){trust.animate([{opacity:1},{opacity:.5},{opacity:1}],{duration:1200});}
+/* ====== Load Plays ====== */
+async function loadPlays(){
+  const res = await fetch('plays.json?v='+Date.now());
+  plays = await res.json();
+  log(`Loaded ${plays.length} synthetic plays.`,'info');
+}
+loadPlays();
 
-/* ---------- Plays & Tracks ---------- */
-const plays=[
- {desc:"Short pass for 7 yards – 1ST DOWN.",file:"balltrack_short.json"},
- {desc:"Deep left completion for 30 yards!",file:"balltrack_deep.json"},
- {desc:"Run up the middle for 5 yards.",file:"balltrack_run.json"},
- {desc:"Incomplete deep right – QB pressure.",file:"balltrack_incomplete.json"}
-];
-let playIndex=-1;
-
-/* ---------- Run Play ---------- */
+/* ====== Render Engine ====== */
 async function runPlay(){
-  playIndex=(playIndex+1)%plays.length;
-  const p=plays[playIndex];
-  pulseBadge();drawField();
-  log(`🔁 Next Play → ${p.desc}`,'info');
+  if(!plays.length){ log('No plays loaded yet...','warn'); return; }
+  currentPlay = (currentPlay+1) % plays.length;
+  const p = plays[currentPlay];
+  drawField();
+  pulse();
+  log(`🏈 Q${p.quarter} ${p.clock} — ${p.down}&${p.distance} at ${p.yard_line}`,'info');
+  log(`🧩 ${p.team}: ${p.description}`,'ok');
+
+  // Update box score counters (prelim attempts)
+  boxScore.plays += 1;
+  if(p.type.startsWith('pass')) boxScore.att += 1;
+  if(p.type==='run') boxScore.rush += 1;
+  if(p.first_down) boxScore.first += 1;
+  boxScore.yards += (p.yards||0);
+  updateBox();
+
   try{
-    const res=await fetch(`${p.file}?v=${Date.now()}`); // cache-bust
-    const data=await res.json();
-    renderTrajectory(data,p.desc);
-  }catch(e){log('Error loading track '+p.file,'warn');}
+    const [ballRes, playerRes] = await Promise.all([
+      fetch(p.balltrack+'?v='+Date.now()),
+      fetch(p.players+'?v='+Date.now())
+    ]);
+    const ball = await ballRes.json();
+    const squad = await playerRes.json();
+    if(p.complete) { boxScore.comp += 1; updateBox(); }
+    renderPlay(ball, squad);
+  }catch(e){ log('Error loading play assets','warn'); }
 }
 
-/* ---------- Trajectory Renderer ---------- */
-function renderTrajectory(data,desc){
-  const m=data.metadata;
-  trust.style.background=m.trust_badge_color||'#72B6E5';
-  trust.textContent=`Visible Truth • ${m.latency_s||1.5}s Delay ${m.consent?'✓':'✗'}`;
-  const pts=data.trajectory.map(t=>({
-    x:(t.x/10)*canvas.width*0.9+40,
-    y:canvas.height-(t.y/5)*canvas.height*0.8-40
+function renderPlay(ball, playersData){
+  const m=ball.metadata||{};
+  trust.style.background = m.trust_badge_color || '#72B6E5';
+  trust.textContent = `Visible Truth • ${(m.latency_s||1.5)}s Delay ${m.consent?'✓':'✗'}`;
+
+  const pts = (ball.trajectory||[]).map(t=>({ x:mapX(t.x), y:mapY(t.y) }));
+  const players = (playersData.players||[]).map(p=>({
+    id:p.id, role:p.role, color:p.color,
+    path:p.path.map(pt=>({x:mapX(pt.x), y:mapY(pt.y)}))
   }));
-  ctx.beginPath();ctx.strokeStyle='#ffd97a';ctx.lineWidth=3;ctx.moveTo(pts[0].x,pts[0].y);
+
   let i=0;
-  const step=()=>{
-    if(i<pts.length){
-      ctx.lineTo(pts[i].x,pts[i].y);ctx.stroke();
-      if(data.sponsor.active&&i%2===0){
-        ctx.beginPath();ctx.arc(pts[i].x,pts[i].y,2,0,Math.PI*2);
-        ctx.fillStyle=data.sponsor.trail_color;ctx.fill();}
-      i+=reduceMotion?pts.length:1;
-      animRAF=requestAnimationFrame(step);
-    }else{
-      ctx.beginPath();ctx.arc(pts.at(-1).x,pts.at(-1).y,10,0,Math.PI*2);
-      ctx.strokeStyle='rgba(255,217,122,.4)';ctx.stroke();
-      setTimeout(()=>{ctx.globalAlpha=.3;drawField();ctx.globalAlpha=1;
-        log('Awaiting next synthetic feed …','info');},800);
+  const trailLen = 8; // ghost frames
+  const ballTrail = [];
+  const playerTrails = players.map(()=>[]);
+
+  function frame(){
+    drawField();
+
+    // draw trails (fading)
+    ctx.globalAlpha = 0.25;
+    ballTrail.forEach((pt, idx)=>{
+      const a = (idx+1)/ballTrail.length;
+      ctx.beginPath(); ctx.arc(pt.x, pt.y, 2+a*2, 0, Math.PI*2);
+      ctx.fillStyle = '#ffd97a'; ctx.fill();
+    });
+    ctx.globalAlpha = 1.0;
+
+    // ball path (current)
+    if(pts.length){
+      ctx.beginPath();
+      ctx.strokeStyle='#ffd97a'; ctx.lineWidth=3;
+      ctx.moveTo(pts[0].x, pts[0].y);
+      ctx.lineTo(pts[Math.min(i, pts.length-1)].x, pts[Math.min(i, pts.length-1)].y);
+      ctx.stroke();
     }
-  };
-  step();
+
+    // sponsor sparkle
+    if(ball.sponsor && ball.sponsor.active && i%2===0 && pts[i]){
+      ctx.beginPath(); ctx.arc(pts[i].x, pts[i].y, 2, 0, Math.PI*2);
+      ctx.fillStyle = ball.sponsor.trail_color || '#FFD97A'; ctx.fill();
+    }
+
+    // players
+    players.forEach((pl, idx)=>{
+      const f = pl.path[Math.min(i, pl.path.length-1)] || pl.path.at(-1);
+      // update trail
+      const pt = {x:f.x, y:f.y};
+      const tarr = playerTrails[idx];
+      tarr.push(pt); if(tarr.length>trailLen) tarr.shift();
+
+      // draw trails
+      ctx.globalAlpha = 0.22;
+      tarr.forEach((tp, j)=>{
+        const a = (j+1)/tarr.length;
+        ctx.beginPath(); ctx.arc(tp.x, tp.y, 3+a*1.5, 0, Math.PI*2);
+        ctx.fillStyle = pl.color; ctx.fill();
+      });
+      ctx.globalAlpha = 1.0;
+
+      // draw dot + label
+      ctx.beginPath(); ctx.arc(f.x, f.y, 6, 0, Math.PI*2);
+      ctx.fillStyle = pl.color; ctx.fill();
+      ctx.font='10px Inter'; ctx.fillText(pl.id, f.x+8, f.y+3);
+    });
+
+    // push ball trail
+    if(pts[i]){ ballTrail.push({x:pts[i].x,y:pts[i].y}); if(ballTrail.length>trailLen) ballTrail.shift(); }
+
+    // advance
+    if(reduceMotion) i = pts.length;
+    else i += Math.max(1, Math.round(speed)); // speed multiplier
+
+    if(i < Math.max(pts.length, ...players.map(p=>p.path.length))){
+      animRAF = requestAnimationFrame(frame);
+    }else{
+      setTimeout(()=>log('Awaiting next synthetic feed …','info'), 700);
+    }
+  }
+  frame();
 }
 
-/* ---------- Boot ---------- */
-nextBtn.onclick=runPlay;
+/* ====== Boot ====== */
+nextBtn.onclick = runPlay;
 drawField();
+updateBox();
 log('Ready · tap “📡 Engage Synthetic Play” to begin.','info');
 </script>
 </body>
