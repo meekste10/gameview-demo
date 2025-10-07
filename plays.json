@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "quarter": 1,
+    "clock": "12:48",
+    "down": 2,
+    "distance": 7,
+    "yard_line": "GB 43",
+    "description": "Love pass short right to Watson for 7 yards, 1ST DOWN.",
+    "team": "Green Bay",
+    "balltrack": "sample_balltrack.json"
+  },
+  {
+    "id": 2,
+    "quarter": 1,
+    "clock": "12:15",
+    "down": 1,
+    "distance": 10,
+    "yard_line": "CHI 50",
+    "description": "Jones left tackle for 4 yards.",
+    "team": "Green Bay",
+    "balltrack": "sample_balltrack.json"
+  },
+  {
+    "id": 3,
+    "quarter": 1,
+    "clock": "11:36",
+    "down": 2,
+    "distance": 6,
+    "yard_line": "CHI 46",
+    "description": "Love deep left incomplete to Reed.",
+    "team": "Green Bay",
+    "balltrack": "sample_balltrack.json"
+  }
+]
