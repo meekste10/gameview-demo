@@ -1,4 +1,4 @@
-/* gameview.js — Randomized Replay Sandbox (patched build) */
+/* gameview.js — fixed layout + playback */
 (()=>{
 const q = new URLSearchParams(location.search);
 const DATA_URL = q.get('data') || './telemetry_converted.json';
@@ -20,7 +20,7 @@ let telem=null,times=[],t0Data=0,tNowStart=0,playing=false,frameIdx=0;
 let emaState=new Map(),lastDraw=performance.now(),fpsActual=0;
 let reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// ---- resize & DPR fix ----
+// --- resize hook ---
 function resize(){
   const dpr=window.devicePixelRatio||1;
   const cssW=canvas.clientWidth||900;
@@ -31,7 +31,7 @@ function resize(){
   drawStaticField();
   if(telem) drawAtIndex(frameIdx);
 }
-new ResizeObserver(resize).observe(canvas);
+window.addEventListener('resize',resize);
 resize();
 
 function lerp(a,b,t){return a+(b-a)*t}
@@ -39,6 +39,7 @@ function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function binSearch(arr,x){let lo=0,hi=arr.length-1;while(lo<hi){const m=(lo+hi)>>1;(arr[m]<x)?lo=m+1:hi=m;}return lo;}
 function ema(prev,curr,a){return prev==null?curr:prev*(1-a)+curr*a}
 function dist2(a,b){const dx=a.x-b.x,dy=a.y-b.y,dz=(a.z||0)-(b.z||0);return dx*dx+dy*dy+dz*dz}
+
 function validateSchema(d){
   const ok=d&&d.schema==='gv-telemetry/v1'&&typeof d.fps==='number'&&d.field_cs&&Array.isArray(d.frames)&&d.frames.length>1;
   if(!ok)return{ok:false,why:'Schema header missing/invalid'};
@@ -49,20 +50,23 @@ function validateSchema(d){
   }return{ok:true};
 }
 
+// --- draw static field ---
 const fieldOS=document.createElement('canvas');
-fieldOS.width=canvas.width;fieldOS.height=canvas.height;
 const fctx=fieldOS.getContext('2d');
 function drawStaticField(){
-  fctx.clearRect(0,0,fieldOS.width,fieldOS.height);
+  fieldOS.width=canvas.width;fieldOS.height=canvas.height;
   fctx.fillStyle='#0a4f1a';fctx.fillRect(0,0,fieldOS.width,fieldOS.height);
   fctx.strokeStyle='rgba(255,255,255,.25)';fctx.lineWidth=1;
-  for(let i=0;i<=10;i++){const x=50+i*((fieldOS.width-100)/10);
-    fctx.beginPath();fctx.moveTo(x,30);fctx.lineTo(x,fieldOS.height-30);fctx.stroke();}
-  fctx.strokeStyle='rgba(255,255,255,.6)';fctx.lineWidth=2;
+  for(let i=0;i<=10;i++){
+    const x=50+i*((fieldOS.width-100)/10);
+    fctx.beginPath();fctx.moveTo(x,30);fctx.lineTo(x,fieldOS.height-30);fctx.stroke();
+  }
+  fctx.strokeStyle='rgba(255,255,255,.6)';
   fctx.strokeRect(50,30,fieldOS.width-100,fieldOS.height-60);
 }
 drawStaticField();
 
+// --- infer actions ---
 const actState=new Map();
 function hyst(s,v,lo,hi,a,b){if(s===a&&v>hi)return b;if(s===b&&v<lo)return a;return s;}
 function inferAction(id,prev,curr,dt,nearBall){
@@ -78,7 +82,7 @@ function inferAction(id,prev,curr,dt,nearBall){
   if(dz>1.5)st='jump';
   if(st!=='jump'&&yaw>2.0&&speed>3.0)st='spin';
   if(st==='jump'&&nearBall&&dz<0.2)st='jump_catch';
-  let conf=clamp(0.4+0.1*speed+0.15*(st==='jump')+0.15*(st==='spin')-0.1*(yaw<0.5),0,1);
+  const conf=clamp(0.4+0.1*speed+0.15*(st==='jump')+0.15*(st==='spin')-0.1*(yaw<0.5),0,1);
   actState.set(id,{state:st,conf});
   return{state:st,conf};
 }
@@ -97,7 +101,7 @@ function drawStick(p,act,col){
 }
 function drawBall(b){ctx.fillStyle='#ffd97a';ctx.beginPath();ctx.arc(b.x,b.y-b.z,4,0,Math.PI*2);ctx.fill();}
 
-const SCALE=8;const OFFSET={x:100,y:400,zpx:20};
+const SCALE=8,OFFSET={x:100,y:400,zpx:20};
 function mapPos(pt){return{x:OFFSET.x+pt.x*SCALE,y:OFFSET.y-pt.y*SCALE,z:clamp(pt.z*OFFSET.zpx,0,60)}}
 function snapBallIfCatch(ball,p,s){if(s==='jump'||s==='jump_catch'){const h={x:p.x,y:p.y-52,z:p.z+8};if(Math.sqrt(dist2(ball,h))<12){ball.x=h.x;ball.y=h.y;ball.z=h.z;}}}
 
@@ -105,9 +109,12 @@ function setPlay(v){playing=v;if(v){tNowStart=performance.now();loop();}}
 btnPlay.onclick=()=>setPlay(true);
 btnPause.onclick=()=>setPlay(false);
 btnStep.onclick=()=>{setPlay(false);drawAtIndex(Math.min(frameIdx+1,telem.frames.length-1));};
-scrub.oninput=e=>{const lastTime=times[times.length-1];
+scrub.oninput=e=>{
+  const lastTime=times[times.length-1];
   const t=t0Data+(lastTime-t0Data)*(e.target.value/1000);
-  const i=binSearch(times,t);drawAtIndex(i);};
+  const i=binSearch(times,t);
+  drawAtIndex(i);
+};
 chkRM.onchange=()=>reduceMotion=chkRM.checked;
 
 function loop(){
@@ -131,11 +138,12 @@ function drawAtIndex(i){
   const f=telem.frames[i];
   const dt=i>0?(times[i]-times[i-1]):(1/telem.fps);
   const actors=f.players.map(p=>{
-    const M=mapPos(p);const prev=emaState.get(p.id)||{};
+    const M=mapPos(p);
+    const prev=emaState.get(p.id)||{};
     const a=0.35;
     const sx=ema(prev.x,M.x,a),sy=ema(prev.y,M.y,a),sz=ema(prev.z,M.z,a);
     emaState.set(p.id,{x:sx,y:sy,z:sz,_px:prev.x,_py:prev.y});
-    return{id:p.id,role:p.role||'UNK',team:p.team||'home',x:sx,y:sy,z:sz,_prev:prev};
+    return{id:p.id,team:p.team||'home',x:sx,y:sy,z:sz,_prev:prev};
   });
   const Mb=mapPos(f.ball);
   const pb=emaState.get('__ball__')||{};
@@ -164,7 +172,8 @@ function drawAtIndex(i){
 }
 
 fetch(DATA_URL).then(r=>r.json()).then(d=>{
-  const v=validateSchema(d);if(!v.ok){HUD.textContent=`Schema Error: ${v.why}`;ctx.fillStyle='#300';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#f88';ctx.fillText('SCHEMA ERROR',40,40);return;}
+  const v=validateSchema(d);
+  if(!v.ok){HUD.textContent=`Schema Error: ${v.why}`;return;}
   telem=d;times=d.frames.map(f=>f.time_s);t0Data=times[0];
   drawAtIndex(0);
   if(!(reduceMotion||chkRM.checked))setPlay(true);
