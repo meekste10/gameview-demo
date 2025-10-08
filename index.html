@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GameView — Randomized Replay Sandbox</title>
+<title>GameView — Multi-Play Replay Sandbox</title>
 <script>
-  const ds = new URLSearchParams(location.search).get('data') || './sample_balltrack.json';
+  const ds = new URLSearchParams(location.search).get('data') || './sample_plays.json';
   const l = document.createElement('link');
   l.rel = 'preload';
   l.as = 'fetch';
@@ -32,23 +32,21 @@ a{color:#72b6e5;}
 </head>
 <body>
 <header>
-  <strong>GameView — Randomized Replay Sandbox</strong>
+  <strong>GameView — Multi-Play Replay Sandbox</strong>
   <small class="badge">Research Mode</small>
 </header>
 <main>
   <canvas id="field" width="360" height="200"></canvas>
-  <div id="hud" class="hud"></div>
+  <div id="hud" class="hud">Loading...</div>
   <div class="controls">
     <button id="play">▶</button>
     <button id="pause">⏸</button>
     <button id="step">⏭</button>
-    <input id="scrub" type="range" min="0" max="1000" value="0">
-    <label><input id="rm" type="checkbox"> Reduce motion</label>
   </div>
 </main>
 <footer>
   <a href="gv-telemetry-v1.json">Schema</a> • 
-  <a href="sample_balltrack.json">Telemetry</a> • 
+  <a href="sample_plays.json">Plays Data</a> • 
   <a href="gameview.js">gameview.js</a>
 </footer>
 <script src="gameview.js"></script>
