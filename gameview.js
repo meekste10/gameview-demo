@@ -63,6 +63,11 @@ function drawFrame(f){
   drawField();
 
   const ball=map(f.ball);
+
+  // debug rings (just to confirm drawing works)
+  drawRing(ball.x, ball.y, 25, 'rgba(255,255,255,0.6)', 1);
+  drawRing(ball.x, ball.y - ball.z, 15, 'rgba(255,255,0,0.8)', 1);
+
   ctx.fillStyle='#ffd97a';
   ctx.beginPath();ctx.arc(ball.x,ball.y-ball.z,3,0,Math.PI*2);ctx.fill();
 
