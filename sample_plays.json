@@ -1,0 +1,34 @@
+{
+  "schema": "gv-telemetry/v1",
+  "fps": 10,
+  "field_cs": { "units": "m", "origin": "home_left_goal", "axes": "x-right,y-upfield,z-up" },
+  "plays": [
+    {
+      "id": "P001",
+      "label": "Short pass left",
+      "frames": [
+        {"time_s":0.00,"players":[{"id":"WR","team":"home","x":2,"y":3,"z":0.2},{"id":"CB","team":"away","x":4,"y":1,"z":0}],"ball":{"x":0,"y":0,"z":1.8}},
+        {"time_s":0.10,"players":[{"id":"WR","team":"home","x":3,"y":3.4,"z":0.6},{"id":"CB","team":"away","x":4.6,"y":1.2,"z":0}],"ball":{"x":1.2,"y":0.5,"z":3.0}},
+        {"time_s":0.20,"players":[{"id":"WR","team":"home","x":4.2,"y":3.9,"z":0.9},{"id":"CB","team":"away","x":5.2,"y":1.8,"z":0}],"ball":{"x":2.4,"y":1.1,"z":4.2}}
+      ]
+    },
+    {
+      "id": "P002",
+      "label": "Deep fade",
+      "frames": [
+        {"time_s":0.00,"players":[{"id":"WR","team":"home","x":2,"y":2,"z":0.2},{"id":"CB","team":"away","x":3,"y":0.5,"z":0}],"ball":{"x":0,"y":0,"z":1.8}},
+        {"time_s":0.10,"players":[{"id":"WR","team":"home","x":5,"y":4,"z":0.7},{"id":"CB","team":"away","x":6,"y":2,"z":0}],"ball":{"x":2,"y":1,"z":4.0}},
+        {"time_s":0.20,"players":[{"id":"WR","team":"home","x":8,"y":6,"z":0.5},{"id":"CB","team":"away","x":9,"y":4,"z":0}],"ball":{"x":4,"y":2,"z":3.0}}
+      ]
+    },
+    {
+      "id": "P003",
+      "label": "Run up the middle",
+      "frames": [
+        {"time_s":0.00,"players":[{"id":"RB","team":"home","x":1,"y":0.5,"z":0},{"id":"LB","team":"away","x":3,"y":2,"z":0}],"ball":{"x":1,"y":0.5,"z":0.5}},
+        {"time_s":0.10,"players":[{"id":"RB","team":"home","x":2,"y":1,"z":0},{"id":"LB","team":"away","x":3,"y":2.3,"z":0}],"ball":{"x":2,"y":1,"z":0.5}},
+        {"time_s":0.20,"players":[{"id":"RB","team":"home","x":3,"y":1.5,"z":0},{"id":"LB","team":"away","x":3.2,"y":2.5,"z":0}],"ball":{"x":3,"y":1.5,"z":0.5}}
+      ]
+    }
+  ]
+}
