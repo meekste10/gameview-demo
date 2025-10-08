@@ -1,4 +1,4 @@
-/* gameview.js — enhanced visual cues + yard numbers */
+/* gameview.js — camera follow + motion trails */
 (()=>{
 const DATA_URL = 'https://meekste10.github.io/gameview-demo/drive_realistic_shotgun.json';
 
@@ -12,10 +12,13 @@ const stepBtn=document.getElementById('step');
 let plays=[],playIndex=0,frame=0,playing=false;
 let lastHolder=null, catchFlash=0, tackleFlash=0;
 
-// --- coordinate map (broadcast view) ---
+// new globals
+let camX=0, trailMap=new Map();
+
+// --- coordinate map (broadcast view, camera offset) ---
 function map(p){
   const SCALE_X=8, SCALE_Y=6;
-  const ORIGIN_X=60, ORIGIN_Y=canvas.height/2;
+  const ORIGIN_X=60-camX, ORIGIN_Y=canvas.height/2;
   return {x:ORIGIN_X+p.y*SCALE_X, y:ORIGIN_Y+p.x*SCALE_Y, z:p.z*12};
 }
 
@@ -25,7 +28,7 @@ function drawField(){
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
   const w=canvas.width-120;
-  const left=60;
+  const left=60-camX; // camera offset here too
   ctx.strokeStyle='rgba(255,255,255,.3)';
   ctx.textAlign='center';
   ctx.textBaseline='top';
@@ -34,7 +37,6 @@ function drawField(){
   for(let i=0;i<=10;i++){
     const x=left+i*(w/10);
     ctx.beginPath();ctx.moveTo(x,20);ctx.lineTo(x,canvas.height-20);ctx.stroke();
-
     if(i>0 && i<10){
       const yard=(i<=5?i*10:100-i*10);
       ctx.fillStyle='rgba(255,255,255,.6)';
@@ -60,58 +62,59 @@ function drawRing(x,y,r,color,a=1){
 
 // --- main draw ---
 function drawFrame(f){
+  // smooth camera follow ball.x
+  const targetCamX = f.ball.y * 8 - 60; // ball position in scaled coords
+  camX += (targetCamX - camX) * 0.08;   // smooth pan easing
+
   drawField();
 
   const ball=map(f.ball);
-
-  // debug rings (just to confirm drawing works)
-  drawRing(ball.x, ball.y, 25, 'rgba(255,255,255,0.6)', 1);
-  drawRing(ball.x, ball.y - ball.z, 15, 'rgba(255,255,0,0.8)', 1);
-
   ctx.fillStyle='#ffd97a';
   ctx.beginPath();ctx.arc(ball.x,ball.y-ball.z,3,0,Math.PI*2);ctx.fill();
 
   let holder=null;
-
-  // detect possession
   f.players.forEach(p=>{
     const m=map(p);
     if(dist(m,ball)<8) holder=p.id;
   });
 
-  // detect catch event (possession change)
   if(holder && holder!==lastHolder && lastHolder){catchFlash=6;}
   if(!holder && lastHolder && f.ball.z<1.0){tackleFlash=6;}
   lastHolder=holder||lastHolder;
 
-  // draw players
+  // --- player trails ---
+  ctx.globalAlpha=0.25;
+  trailMap.forEach((pt,id)=>{
+    ctx.fillStyle=id.startsWith("home")?'#72b6e5':'#ff9999';
+    ctx.beginPath();ctx.arc(pt.x,pt.y,2,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+
+  const newTrailMap=new Map();
   f.players.forEach(p=>{
     const m=map(p);
     const col=p.team==='home'?'#72b6e5':'#ff9999';
     ctx.strokeStyle=col;ctx.lineWidth=2;
     ctx.beginPath();ctx.moveTo(m.x,m.y-10);ctx.lineTo(m.x,m.y-25);ctx.stroke();
     ctx.beginPath();ctx.arc(m.x,m.y-30,3,0,Math.PI*2);ctx.stroke();
-
-    // holder glow
     if(holder===p.id){
       drawRing(m.x,m.y-20,10,'rgba(255,217,122,0.5)',0.6);
     }
+    newTrailMap.set(p.team+m.x+m.y,{x:m.x,y:m.y});
   });
+  trailMap=newTrailMap;
 
-  // catch flash
   if(catchFlash>0){
     drawRing(ball.x,ball.y-ball.z,15,'rgba(255,255,0,0.8)',catchFlash/6);
     catchFlash--;
   }
 
-  // tackle flash
   if(tackleFlash>0){
     drawRing(ball.x,ball.y,20,'rgba(255,255,255,0.8)',tackleFlash/6);
     tackleFlash--;
     if(tackleFlash===5) HUD.textContent='TACKLED!';
   }
 
-  // live HUD info
   HUD.textContent=`Play ${playIndex+1}/${plays.length} — Holder: ${holder||'None'}`;
 }
 
