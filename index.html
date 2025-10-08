@@ -7,7 +7,7 @@
 
 <!-- preload current dataset -->
 <script>
-  const ds = new URLSearchParams(location.search).get('data') || './drive_shotgun.json';
+  const ds = new URLSearchParams(location.search).get('data') || './drive_realistic_shotgun.json';
   const link = document.createElement('link');
   link.rel = 'preload';
   link.as = 'fetch';
@@ -111,7 +111,7 @@ a:hover{text-decoration:underline}
 
 <footer>
   <a href="gv-telemetry-v1.json">Schema</a> • 
-  <a href="drive_shotgun.json">Shotgun Drive</a> • 
+  <a href="drive_realistic_shotgun.json">Shotgun Drive</a> • 
   <a href="gameview.js">gameview.js</a>
 </footer>
 
