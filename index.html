@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GameView — AR Telemetry Sandbox</title>
+<title>GameView — Analyst Mode Sandbox</title>
 
 <!-- preload current dataset -->
 <script>
@@ -65,8 +65,8 @@ canvas#field{
   display:flex;
   justify-content:center;
   align-items:center;
-  gap:8px;
-  margin:8px 0;
+  gap:10px;
+  margin:10px 0;
   flex-wrap:wrap;
 }
 button{
@@ -75,7 +75,21 @@ button{
   border-radius:6px;
   background:var(--sky);
   color:#000;
+  font-weight:600;
   cursor:pointer;
+}
+button:hover{opacity:.85}
+label{
+  font-size:13px;
+  user-select:none;
+}
+select{
+  background:#1e2830;
+  color:#fff;
+  border:1px solid #444;
+  border-radius:6px;
+  padding:4px 6px;
+  font-size:13px;
 }
 .hud{
   font:13px/1.5 Inter,system-ui;
@@ -95,17 +109,25 @@ a:hover{text-decoration:underline}
 
 <body>
 <header>
-  <strong>GameView — Telemetry Replay Sandbox</strong>
+  <strong>GameView — Analyst Mode Sandbox</strong>
   <small class="badge">Research Mode</small>
 </header>
 
 <main>
   <canvas id="field" width="960" height="540"></canvas>
   <div id="hud" class="hud">Loading data…</div>
+
+  <!-- ✅ Enhanced Controls Panel -->
   <div class="controls">
     <button id="play">▶</button>
     <button id="pause">⏸</button>
     <button id="step">⏭</button>
+    <label><input type="checkbox" id="showSpeed" checked> Speed</label>
+    <label><input type="checkbox" id="showPos" checked> Positions</label>
+    <label><input type="checkbox" id="showTrails" checked> Trails</label>
+    <select id="focusPlayer">
+      <option value="">Highlight Player</option>
+    </select>
   </div>
 </main>
 
@@ -115,6 +137,6 @@ a:hover{text-decoration:underline}
   <a href="gameview.js">gameview.js</a>
 </footer>
 
-<script src="gameview.js?v=20251007"></script>
+<script src="gameview.js?v=20251008"></script>
 </body>
 </html>
