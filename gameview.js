@@ -22,7 +22,18 @@ function drawField(){
   ctx.strokeRect(40,20,canvas.width-80,canvas.height-40);
 }
 
-function map(p){return{x:100+p.x*6,y:180-p.y*6,z:p.z*10}}
+function map(p){
+  // true broadcast view — left→right is upfield, y offset is lateral spread
+  const SCALE_X = 8;   // horizontal stretch
+  const SCALE_Y = 6;   // vertical compression
+  const ORIGIN_X = 60; // left padding
+  const ORIGIN_Y = canvas.height/2; // center field vertically
+  return {
+    x: ORIGIN_X + p.y * SCALE_X,
+    y: ORIGIN_Y + p.x * SCALE_Y,  // flip x/y axes for horizontal drive
+    z: p.z * 12
+  };
+}
 function drawFrame(f){
   drawField();
   const ball=map(f.ball);
