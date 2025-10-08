@@ -1,146 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>GameView — Ethical Telemetry Prototype (Phase III)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GameView — Randomized Replay Sandbox</title>
+<script>
+const ds = new URLSearchParams(location.search).get('data') || './telemetry_converted.json';
+const l = document.createElement('link');
+l.rel='preload'; l.as='fetch'; l.type='application/json';
+l.href=new URL(ds,location.href).href; l.crossOrigin='anonymous';
+document.head.appendChild(l);
+</script>
 <style>
-:root { --charcoal:#101820;--gold:#ffd97a;--sky:#72b6e5;--field1:#0b6623;--field2:#0a4f1a; }
+:root { --field:#0a4f1a; --bg:#101820; --fg:#ffffff; --sky:#72b6e5; }
 *{box-sizing:border-box}
-body{margin:0;background:var(--charcoal);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
-header{padding:12px 14px;border-bottom:2px solid #223;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-h1{font-size:18px;margin:0}
-.badge{background:var(--sky);color:#000;font-weight:700;padding:6px 10px;border-radius:10px;transition:opacity .5s}
-#wrap{max-width:980px;margin:0 auto;padding:10px}
-canvas{width:100%;aspect-ratio:2/1;background:linear-gradient(var(--field1),var(--field2));border:4px solid var(--gold);border-radius:10px;display:block}
-#controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
-button{flex:1 1 160px;padding:12px 14px;font-size:15px;font-weight:700;border:0;border-radius:10px}
-#nextPlay{background:var(--gold);color:#000}
-.toggle{background:#1f2937;color:#fff;border:1px solid #334155}
-#speedWrap{flex:1 1 100%;display:flex;align-items:center;gap:10px;justify-content:center;color:#cfe4ff}
-#speedRange{width:60%}
-#panels{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}
-.panel{flex:1 1 300px;background:#0e1420;border:1px solid #233;border-radius:8px;padding:10px;min-height:120px}
-.panel h3{margin:0 0 6px 0;font-size:14px;color:#c6e2ff}
-#dataLog{max-height:160px;overflow:auto;font-size:13px;line-height:1.35}
-.ok{color:#94f7c5}.info{color:#c6e2ff}.warn{color:#ffdf99}
-#boxScoreTable{width:100%;border-collapse:collapse;font-size:13px}
-#boxScoreTable th,#boxScoreTable td{border-bottom:1px solid #233;padding:6px 4px;text-align:left}
-footer{max-width:980px;margin:6px auto 18px;padding:8px 12px;opacity:.8;font-size:12px;color:#bcd}
-#contextNote{position:fixed;bottom:6px;right:10px;font-size:11px;background:rgba(16,24,32,.65);padding:6px 8px;border-radius:6px;color:#9cc;z-index:99}
-.badgePulse{animation:pulse 1.2s ease 1}
-@keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+header{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #223}
+small.badge{background:var(--sky);color:#000;padding:4px 8px;border-radius:10px;font-weight:600}
+main{max-width:980px;margin:0 auto;padding:10px 12px}
+canvas#field{display:block;margin:10px auto;background:var(--field);border:2px solid #335;border-radius:6px}
+.controls{display:flex;justify-content:center;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap}
+button{padding:6px 10px;border:none;border-radius:6px;background:var(--sky);color:#000;cursor:pointer}
+input[type="range"]{width:320px}
+.hud{font:12px/1.4 Inter,system-ui;text-align:center;margin:8px 0}
+footer{opacity:.7;text-align:center;padding:10px}
+a{color:#72b6e5}
 </style>
 </head>
 <body>
 <header>
-  <h1>🏈 GameView — Data Becomes Drama (Phase III)</h1>
-  <div class="badge" id="trustBadge">Visible Truth • 1.5 s Delay ✓</div>
+  <strong>GameView — Randomized Replay Sandbox</strong>
+  <small class="badge">Research Mode</small>
 </header>
-
-<div id="wrap">
-  <canvas id="field" width="980" height="490"></canvas>
-
-  <div id="controls">
-    <button id="nextPlay">📡 Engage Synthetic Play</button>
-    <button id="toggleCoach" class="toggle">Coach Mode OFF</button>
-    <button id="toggleMotion" class="toggle">Reduce Motion OFF</button>
-    <div id="speedWrap">
-      <span>Playback Speed</span>
-      <input type="range" id="speedRange" min="0.25" max="2.00" step="0.25" value="1.00">
-      <span id="speedVal">1.00×</span>
-    </div>
+<main>
+  <canvas id="field" width="900" height="500"></canvas>
+  <div id="hud" class="hud"></div>
+  <div class="controls">
+    <button id="play">▶</button>
+    <button id="pause">⏸</button>
+    <button id="step">⏭</button>
+    <input id="scrub" type="range" min="0" max="1000" value="0">
+    <label><input id="rm" type="checkbox"> Reduce motion</label>
   </div>
-
-  <!-- 👇 this is where the upload button should live -->
-  <input type="file" id="fileInput" accept=".json,.jsonl,.csv"
-         style="margin:8px auto;display:block;color:#fff;">
-
-  <div id="panels">
-    <div class="panel">
-      <h3>📜 Play Log</h3>
-      <div id="dataLog" aria-live="polite"></div>
-    </div>
-    <div class="panel">
-      <h3>📊 Box Score (Synthetic)</h3>
-      <table id="boxScoreTable">
-        <thead><tr><th>Metric</th><th>Value</th></tr></thead>
-        <tbody>
-          <tr><td>Plays</td><td id="bs_plays">0</td></tr>
-          <tr><td>Total Yards</td><td id="bs_yards">0</td></tr>
-          <tr><td>First Downs</td><td id="bs_first">0</td></tr>
-          <tr><td>Pass (C/Att)</td><td id="bs_pass">0/0</td></tr>
-          <tr><td>Rush Attempts</td><td id="bs_rush">0</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<footer>© 2025 GameView LLC • Ethics-as-UX Demo • Practice Data Only</footer>
-<div id="contextNote">Synthetic replay · no live athlete data</div>
-
-<script>
-/* your existing Phase III script (unchanged) ... */
-
-/* =======================================================
-   🛰️  Synthetic Live-Feed Uploader + Stream Simulator
-   ======================================================= */
-document.getElementById('fileInput').onchange = async (e)=>{
-  const file = e.target.files[0];
-  if(!file){ log('No file selected','warn'); return; }
-
-  const text = await file.text();
-  const lines = text.trim().split('\n');
-  const frames = lines.map(l=>{
-    try { return JSON.parse(l); } catch { return null; }
-  }).filter(Boolean);
-
-  log(`Loaded ${frames.length} telemetry frames from synthetic tracker feed.`,'info');
-  simulateStream(frames);
-};
-
-function simulateStream(frames){
-  let i = 0;
-  const total = frames.length;
-  log('Beginning synthetic data loop ...','info');
-  const tickRate = 100; // 10 Hz
-  function tick(){
-    const frame = frames[i];
-    drawTelemetryFrame(frame.entities);
-    i++;
-    if(i < total) setTimeout(tick, tickRate);
-    else log('Synthetic feed complete','ok');
-  }
-  tick();
-}
-
-function drawTelemetryFrame(entities){
-  drawField();
-  entities.forEach(ent=>{
-    const x = (ent.x/100)*canvas.width;
-    const y = canvas.height - (ent.y/53.3)*canvas.height;
-    let color = '#FFFFFF';
-    if(ent.id==='BALL') color = '#FFD97A';
-    else if(ent.team==='GB') color = '#00FF70';
-    else if(ent.team==='CHI') color = '#72B6E5';
-    ctx.beginPath();
-    ctx.arc(x, y, ent.id==='BALL'?5:4, 0, Math.PI*2);
-    ctx.fillStyle = color; ctx.fill();
-    if(coachMode && ent.id!=='BALL'){
-      ctx.font='10px Inter'; ctx.fillText(ent.id, x+6, y+3);
-    }
-  });
-}
-// TEMP: Auto-load sample feed for testing if upload fails
-fetch('synthetic_feed.jsonl')
-  .then(r=>r.text())
-  .then(text=>{
-    const frames = text.trim().split('\n').map(l=>JSON.parse(l));
-    log(`Auto-loaded ${frames.length} frames from repo for test.`, 'info');
-    simulateStream(frames);
-  })
-  .catch(()=>log('No synthetic_feed.jsonl found in repo. Upload manually.','warn'));
-</script>
+</main>
+<footer>
+  <a href="gv-telemetry-v1.json">Schema</a> • 
+  <a href="telemetry_converted.json">Telemetry</a> • 
+  <a href="gameview.js">gameview.js</a>
+</footer>
+<script src="gameview.js"></script>
 </body>
 </html>
