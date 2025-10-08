@@ -1,6 +1,6 @@
 /* gameview.js — multi-play sequence viewer */
 (()=>{
-const DATA_URL = 'https://meekste10.github.io/gameview-demo/drive_shotgun_routes.json';
+const DATA_URL = 'https://meekste10.github.io/gameview-demo/drive_realistic_shotgun.json';
 
 const canvas=document.getElementById('field');
 const ctx=canvas.getContext('2d');
