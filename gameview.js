@@ -1,6 +1,6 @@
 /* gameview.js — multi-play sequence viewer */
 (()=>{
-const DATA_URL='https://meekste10.github.io/gameview-demo/sample_plays.json';
+const DATA_URL = 'https://meekste10.github.io/gameview-demo/drive_001.json';
 
 const canvas=document.getElementById('field');
 const ctx=canvas.getContext('2d');
