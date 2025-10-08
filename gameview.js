@@ -1,17 +1,17 @@
-/* gameview.js — debug enforced absolute fetch */
+/* gameview.js — multi-play sequence viewer */
 (()=>{
-const DATA_URL = 'https://meekste10.github.io/gameview-demo/sample_balltrack.json';
-console.log('Fetching telemetry from', DATA_URL);
+const DATA_URL='https://meekste10.github.io/gameview-demo/sample_plays.json';
 
 const canvas=document.getElementById('field');
 const ctx=canvas.getContext('2d');
 const HUD=document.getElementById('hud');
-const btnPlay=document.getElementById('play');
-const btnPause=document.getElementById('pause');
+const playBtn=document.getElementById('play');
+const pauseBtn=document.getElementById('pause');
+const stepBtn=document.getElementById('step');
 
-let telem=null,times=[],t0=0,frame=0,playing=false;
+let plays=[],playIndex=0,frame=0,playing=false;
 
-function drawStaticField(){
+function drawField(){
   ctx.fillStyle='#0a4f1a';
   ctx.fillRect(0,0,canvas.width,canvas.height);
   ctx.strokeStyle='rgba(255,255,255,.4)';
@@ -23,48 +23,50 @@ function drawStaticField(){
 }
 
 function map(p){return{x:100+p.x*6,y:180-p.y*6,z:p.z*10}}
-function drawFrame(i){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawStaticField();
-  if(!telem) return;
-  const f=telem.frames[i];
-  if(!f) return;
+function drawFrame(f){
+  drawField();
   const ball=map(f.ball);
   ctx.fillStyle='#ffd97a';
   ctx.beginPath();ctx.arc(ball.x,ball.y-ball.z,3,0,Math.PI*2);ctx.fill();
   f.players.forEach(p=>{
     const m=map(p);
     ctx.strokeStyle=p.team==='home'?'#72b6e5':'#ff9999';
-    ctx.beginPath();
-    ctx.moveTo(m.x,m.y-10);ctx.lineTo(m.x,m.y-25);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(m.x,m.y-10);ctx.lineTo(m.x,m.y-25);ctx.stroke();
     ctx.beginPath();ctx.arc(m.x,m.y-30,3,0,Math.PI*2);ctx.stroke();
   });
 }
 
-function loop(){
-  if(!playing) return;
-  frame=(frame+1)%times.length;
-  drawFrame(frame);
-  requestAnimationFrame(loop);
+function drawPlay(idx){
+  const p=plays[idx];
+  if(!p)return;
+  const f=p.frames[frame];
+  drawFrame(f);
+  HUD.textContent=`Play ${idx+1}/${plays.length}: ${p.label}`;
 }
-btnPlay.onclick=()=>{playing=true;loop();}
-btnPause.onclick=()=>{playing=false;}
+
+function nextFrame(){
+  if(!playing)return;
+  const p=plays[playIndex];
+  if(!p)return;
+  frame++;
+  if(frame>=p.frames.length){
+    frame=0;
+    playIndex=(playIndex+1)%plays.length; // next play
+  }
+  drawPlay(playIndex);
+  setTimeout(nextFrame,100); // 10 fps
+}
+
+playBtn.onclick=()=>{if(plays.length){playing=true;nextFrame();}};
+pauseBtn.onclick=()=>playing=false;
+stepBtn.onclick=()=>{playing=false;frame++;drawPlay(playIndex);};
 
 fetch(DATA_URL,{cache:'no-cache'})
-  .then(r=>{
-    console.log('Response',r.status);
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return r.json();
-  })
+  .then(r=>r.json())
   .then(d=>{
-    console.log('Telemetry loaded',d);
-    telem=d;
-    times=d.frames.map(f=>f.time_s);
-    t0=times[0];
-    drawFrame(0);
+    plays=d.plays||[];
+    HUD.textContent=`Loaded ${plays.length} plays — tap ▶`;
+    drawField();
   })
-  .catch(e=>{
-    HUD.textContent='Error loading telemetry: '+e.message;
-    console.error(e);
-  });
+  .catch(e=>{HUD.textContent='Load error: '+e.message;});
 })();
