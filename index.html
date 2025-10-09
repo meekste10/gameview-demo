@@ -40,9 +40,7 @@ canvas{
   display:flex;flex-wrap:wrap;gap:8px;align-items:center;
   margin-top:12px;background:var(--panel);padding:8px 10px;border-radius:6px
 }
-button,select,input[type="number"],label input[type="checkbox"]{
-  cursor:pointer
-}
+button,select,input[type="number"],label input[type="checkbox"]{cursor:pointer}
 button{
   background:var(--sky);color:#000;border:none;border-radius:6px;
   font-weight:700;padding:6px 10px;transition:opacity .2s
@@ -107,9 +105,12 @@ label{font-size:13px;user-select:none;display:flex;align-items:center;gap:3px}
     <label>To-Go <input type="number" id="togo" step="0.1" style="width:60px" value="10"></label>
     <button id="applyDD">Apply</button>
 
-    <select id="datasetSel" style="min-width:220px">
+    <select id="datasetSel" style="min-width:260px">
       <option value="drive_realistic_shotgun.json">drive_realistic_shotgun.json</option>
       <option value="gv-telemetry-v1.json">gv-telemetry-v1.json</option>
+      <option value="converted_json/kaggle_play_2017090700_20170907000118.json">
+        kaggle_play_2017090700_20170907000118.json
+      </option>
     </select>
     <button id="reload">Reload</button>
   </div>
