@@ -130,7 +130,7 @@ label{font-size:13px;user-select:none;display:flex;align-items:center;gap:3px}
   J/K/L scrub • rAF timing • DPR-safe hit-test • Offscreen field cache • Drag-Drop JSON Loader
 </footer>
 
-<!-- Drag-drop overlay element -->
+<!-- Drag-drop overlay -->
 <div id="dropOverlay">Drop JSON file to load</div>
 
 <script src="gameview.js"></script>
@@ -158,18 +158,13 @@ body.addEventListener('drop', e=>{
     try{
       const data = JSON.parse(ev.target.result);
       if(!data.plays) throw new Error('Invalid GameView JSON');
-      // Expose to GameView.js global
-      window.DROPPED_DATA = data;
-      // Replace fetch logic via synthetic blob URL
       const blob = new Blob([ev.target.result], {type:'application/json'});
       const url = URL.createObjectURL(blob);
       const sel = document.getElementById('datasetSel');
       const opt = document.createElement('option');
       opt.value = url; opt.textContent = '(dropped) ' + file.name;
       sel.appendChild(opt); sel.value = url;
-      // trigger reload
-      const reloadBtn = document.getElementById('reload');
-      reloadBtn?.click();
+      document.getElementById('reload')?.click();
       console.log('Loaded dropped JSON:', file.name);
     }catch(err){ alert('Invalid JSON: '+err.message); }
   };
