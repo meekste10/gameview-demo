@@ -1,5 +1,5 @@
 {
-  "schema": "gv-telemetry-v1",
+  "schema": "gv-telemetry/v1",
   "fps": 10,
   "field_cs": {
     "units": "yards",
