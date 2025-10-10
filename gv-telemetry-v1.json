@@ -1,15 +1,11 @@
 {
   "$id": "https://gameview.ar/schema/gv-telemetry-v1.json",
+  "title": "GameView Telemetry Schema v1",
   "type": "object",
-  "required": [
-    "schema",
-    "fps",
-    "field_cs",
-    "frames"
-  ],
+  "required": ["schema", "fps", "field_cs", "frames"],
   "properties": {
     "schema": {
-      "const": "gv-telemetry/v1"
+      "const": "gv-telemetry-v1"
     },
     "fps": {
       "type": "number",
@@ -18,45 +14,47 @@
     },
     "field_cs": {
       "type": "object",
-      "required": [
-        "units",
-        "origin",
-        "axes"
-      ],
+      "required": ["units", "origin", "axes"],
       "properties": {
         "units": {
           "type": "string",
-          "enum": [
-            "m",
-            "yards"
-          ]
+          "enum": ["m", "yards"]
         },
-        "origin": {
-          "type": "string"
-        },
-        "axes": {
-          "type": "string"
-        }
+        "origin": { "type": "string" },
+        "axes": { "type": "string" }
       }
     },
     "frames": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "time_s",
-          "players",
-          "ball"
-        ],
+        "required": ["time_s", "players", "ball"],
         "properties": {
-          "time_s": {
-            "type": "number"
-          },
+          "time_s": { "type": "number" },
           "players": {
-            "type": "array"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "team", "x", "y", "vx", "vy", "role"],
+              "properties": {
+                "id": { "type": "string" },
+                "team": { "type": "string", "enum": ["home", "away"] },
+                "x": { "type": "number" },
+                "y": { "type": "number" },
+                "vx": { "type": "number" },
+                "vy": { "type": "number" },
+                "role": { "type": "string" }
+              }
+            }
           },
           "ball": {
-            "type": "object"
+            "type": "object",
+            "required": ["x", "y", "z"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "z": { "type": "number" }
+            }
           }
         }
       }
