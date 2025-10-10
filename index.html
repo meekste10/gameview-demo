@@ -3,24 +3,95 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GameView — Dual-View rAF Prototype</title>
+<title>GameView — Dual-View Analyst Sandbox</title>
+
+<!-- Preload dataset -->
+<script>
+  const ds = new URLSearchParams(location.search).get('data') || './drive_nfltelemetry.json';
+  const link = document.createElement('link');
+  link.rel = 'preload'; link.as = 'fetch'; link.type = 'application/json';
+  link.href = new URL(ds, location.href).href; link.crossOrigin = 'anonymous';
+  document.head.appendChild(link);
+</script>
+
 <style>
-body{background:#101820;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0}
-canvas{width:100%;aspect-ratio:16/9;display:block;background:#0a4f1a;border:3px solid #72b6e5;border-radius:8px}
-.controls{padding:10px;text-align:center}
-button{margin:0 6px;padding:8px 14px;font-weight:700;background:#ffd97a;color:#000;border:none;border-radius:6px}
+:root {
+  --field:#0a4f1a; --bg:#101820; --fg:#fff; --sky:#72b6e5; --panel:#1a232c; --line:#335;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #223}
+small.badge{background:var(--sky);color:#000;padding:4px 8px;border-radius:10px;font-weight:600}
+main{max-width:1200px;margin:0 auto;padding:10px 12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px}
+.canvas-wrap{background:var(--field);border:2px solid var(--line);border-radius:6px;display:flex;justify-content:center;align-items:center}
+canvas{width:100%;height:auto;aspect-ratio:16/9;display:block;border-radius:4px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
+button{padding:6px 10px;border:none;border-radius:6px;background:var(--sky);color:#000;font-weight:600;cursor:pointer}
+label{font-size:13px;user-select:none}
+select{background:#1e2830;color:#fff;border:1px solid #444;border-radius:6px;padding:4px 6px;font-size:13px}
+.hud{font:13px/1.5 Inter,system-ui;text-align:center;margin:6px 0}
+footer{opacity:.7;text-align:center;padding:10px;font-size:13px}
+a{color:#72b6e5;text-decoration:none} a:hover{text-decoration:underline}
+@media (max-width: 980px){ .grid{grid-template-columns:1fr} }
 </style>
 </head>
+
 <body>
-<h2 style="text-align:center;padding:10px 0">GameView — Dual-View rAF Prototype</h2>
-<canvas id="fieldXY" width="960" height="540"></canvas>
-<div id="hudXY" style="text-align:center;padding:6px">Loading...</div>
-<div class="controls">
-  <button id="play">▶ Play</button>
-  <button id="pause">⏸ Pause</button>
-  <button id="step">⏭ Step</button>
-  <input type="file" id="fileInput" accept="application/json">
-</div>
-<script src="gameview.js"></script>
+<header>
+  <strong>GameView — Dual-View Analyst Sandbox</strong>
+  <small class="badge">Research Mode</small>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- Left: XY top-down -->
+    <section class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong>XY (Top-Down)</strong>
+        <span style="opacity:.7;font-size:12px">True field scale</span>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="fieldXY" width="960" height="540"></canvas>
+      </div>
+      <div id="hudXY" class="hud">Loading…</div>
+    </section>
+
+    <!-- Right: Z-emphasis follow cam -->
+    <section class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong>Z-Emphasis Follow Cam</strong>
+        <span style="opacity:.7;font-size:12px">Tilted, ~10yd behind target</span>
+      </div>
+      <div class="canvas-wrap">
+        <canvas id="field3D" width="960" height="540"></canvas>
+      </div>
+      <div id="hud3D" class="hud">Loading…</div>
+    </section>
+  </div>
+
+  <!-- Unified Controls -->
+  <div class="controls">
+    <button id="play">▶</button>
+    <button id="pause">⏸</button>
+    <button id="step">⏭</button>
+    <label><input type="checkbox" id="showSpeed" checked> Speed</label>
+    <label><input type="checkbox" id="showPos" checked> Positions</label>
+    <label><input type="checkbox" id="showTrails" checked> Trails</label>
+    <label><input type="checkbox" id="autoCam" checked> Auto-Follow</label>
+    <select id="focusPlayer">
+      <option value="">Follow: Ball (default)</option>
+    </select>
+  </div>
+</main>
+
+<footer>
+  <a href="gv-telemetry-v1.json">Schema</a> •
+  <a href="drive_nfltelemetry.json">Telemetry</a> •
+  <a href="gameview.js">gameview.js</a>
+</footer>
+
+<script src="gameview.js?v=dualview_1"></script>
 </body>
 </html>
