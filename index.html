@@ -5,91 +5,22 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GameView — Dual-View rAF Prototype</title>
 <style>
-:root { --bg:#101820; --fg:#fff; --panel:#1a232c; --line:#334; --sky:#72b6e5; --gold:#ffd97a; --field:#0a4f1a; }
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-header,footer{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
-header strong{font-size:16px}
-footer{border-top:1px solid var(--line);border-bottom:none;opacity:.75;font-size:13px;justify-content:center}
-main{max-width:1200px;margin:0 auto;padding:12px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px}
-.canvas-wrap{background:var(--field);border:2px solid var(--line);border-radius:6px;display:flex;justify-content:center;align-items:center}
-canvas{width:100%;height:auto;aspect-ratio:16/9;display:block;border-radius:4px}
-.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;background:var(--panel);padding:8px 10px;border-radius:6px}
-button,select,input[type="number"],label input[type="checkbox"]{cursor:pointer}
-button{background:var(--sky);color:#000;border:none;border-radius:6px;font-weight:700;padding:6px 10px;transition:opacity .2s}
-button:hover{opacity:.85}
-select,input[type="number"]{background:#1e2830;color:#fff;border:1px solid #444;border-radius:6px;padding:5px 6px;font-size:13px}
-label{font-size:13px;user-select:none;display:flex;align-items:center;gap:3px}
-.hud{font:12px/1.4 system-ui;text-align:center;margin-top:6px;opacity:.9}
-.badge{background:var(--sky);color:#000;font-weight:600;padding:4px 8px;border-radius:10px;font-size:12px}
-@media (max-width:980px){.grid{grid-template-columns:1fr}}
+body{background:#101820;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:0}
+canvas{width:100%;aspect-ratio:16/9;display:block;background:#0a4f1a;border:3px solid #72b6e5;border-radius:8px}
+.controls{padding:10px;text-align:center}
+button{margin:0 6px;padding:8px 14px;font-weight:700;background:#ffd97a;color:#000;border:none;border-radius:6px}
 </style>
 </head>
 <body>
-<header>
-  <strong>GameView — Dual-View rAF Prototype</strong>
-  <span class="badge">Research Mode</span>
-</header>
-
-<main>
-  <div class="grid">
-    <section class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <strong>XY (Top-Down)</strong><small style="opacity:.7">True field scale</small>
-      </div>
-      <div class="canvas-wrap"><canvas id="fieldXY" width="960" height="540"></canvas></div>
-      <div id="hudXY" class="hud">Loading …</div>
-    </section>
-
-    <section class="panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <strong>Z-Follow (Tilted)</strong><small style="opacity:.7">~10 yd behind target</small>
-      </div>
-      <div class="canvas-wrap"><canvas id="field3D" width="960" height="540"></canvas></div>
-      <div id="hud3D" class="hud">Loading …</div>
-    </section>
-  </div>
-
-  <div class="controls">
-    <button id="play">▶</button>
-    <button id="pause">⏸</button>
-    <button id="step">⏭</button>
-
-    <label><input type="checkbox" id="showSpeed" checked> Speed</label>
-    <label><input type="checkbox" id="showPos" checked> Positions</label>
-    <label><input type="checkbox" id="showTrails" checked> Trails</label>
-    <label><input type="checkbox" id="autoCam" checked> Auto-Follow</label>
-    <label><input type="checkbox" id="losOn" checked> LOS / 1st</label>
-    <label><input type="checkbox" id="effectsOn" checked> FX</label>
-
-    <select id="focusPlayer"><option value="">Follow: Ball (default)</option></select>
-
-    <label>LOS Y <input type="number" id="losY" step="0.1" style="width:70px" placeholder="auto"></label>
-    <label>To-Go <input type="number" id="togo" step="0.1" style="width:60px" value="10"></label>
-    <button id="applyDD">Apply</button>
-
-    <select id="datasetSel" style="min-width:260px">
-      <option value="drive_realistic_shotgun.json">drive_realistic_shotgun.json</option>
-      <option value="gv-telemetry-v1.json">gv-telemetry-v1.json</option>
-      <option value="kaggle_play_2017090700_20170907000118.json">kaggle_play_2017090700_20170907000118.json</option>
-      <option value="drive_nfltelemetry.json">drive_nfltelemetry.json</option>
-    </select>
-    <button id="reload">Reload</button>
-
-    <!-- Mobile-friendly file chooser -->
-    <input type="file" id="fileInput" accept="application/json" style="margin-left:auto">
-  </div>
-
-  <div class="panel" style="margin-top:12px;max-width:440px">
-    <strong>Mini-Map</strong>
-    <div class="canvas-wrap" style="margin-top:6px"><canvas id="mini" width="420" height="210"></canvas></div>
-  </div>
-</main>
-
-<footer>J/K/L scrub • rAF timing • DPR-safe hit-test • Offscreen field cache • Mobile file loader</footer>
-
+<h2 style="text-align:center;padding:10px 0">GameView — Dual-View rAF Prototype</h2>
+<canvas id="fieldXY" width="960" height="540"></canvas>
+<div id="hudXY" style="text-align:center;padding:6px">Loading...</div>
+<div class="controls">
+  <button id="play">▶ Play</button>
+  <button id="pause">⏸ Pause</button>
+  <button id="step">⏭ Step</button>
+  <input type="file" id="fileInput" accept="application/json">
+</div>
 <script src="gameview.js"></script>
 </body>
 </html>

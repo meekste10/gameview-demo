@@ -1,28 +1,63 @@
 {
   "$id": "https://gameview.ar/schema/gv-telemetry-v1.json",
   "type": "object",
-  "required": ["schema", "fps", "field_cs", "frames"],
+  "required": [
+    "schema",
+    "fps",
+    "field_cs",
+    "frames"
+  ],
   "properties": {
-    "schema": { "const": "gv-telemetry/v1" },
-    "fps": { "type": "number", "minimum": 1, "maximum": 120 },
+    "schema": {
+      "const": "gv-telemetry/v1"
+    },
+    "fps": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 120
+    },
     "field_cs": {
       "type": "object",
-      "required": ["units", "origin", "axes"],
+      "required": [
+        "units",
+        "origin",
+        "axes"
+      ],
       "properties": {
-        "units": { "type": "string", "enum": ["m"] },
-        "origin": { "type": "string" },
-        "axes": { "type": "string" }
+        "units": {
+          "type": "string",
+          "enum": [
+            "m",
+            "yards"
+          ]
+        },
+        "origin": {
+          "type": "string"
+        },
+        "axes": {
+          "type": "string"
+        }
       }
     },
     "frames": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["time_s", "players", "ball"],
+        "required": [
+          "time_s",
+          "players",
+          "ball"
+        ],
         "properties": {
-          "time_s": { "type": "number" },
-          "players": { "type": "array" },
-          "ball": { "type": "object" }
+          "time_s": {
+            "type": "number"
+          },
+          "players": {
+            "type": "array"
+          },
+          "ball": {
+            "type": "object"
+          }
         }
       }
     }
