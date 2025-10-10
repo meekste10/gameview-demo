@@ -1,92 +1,65 @@
-/* gameview.js — Minimal Dual-View Prototype */
+/* gameview.js — Minimal working viewer */
 (() => {
-  const FIELD_LEN_YD = 120;
-  const FIELD_WID_YD = 53.333;
-
-  const cvs = document.getElementById('fieldXY');
-  const ctx = cvs.getContext('2d');
-  const hud = document.getElementById('hudXY');
+  const FIELD_LEN_YD = 120, FIELD_WID_YD = 53.333;
+  const cvs = document.getElementById("fieldXY");
+  const ctx = cvs.getContext("2d");
+  const hud = document.getElementById("hudXY");
 
   let plays = [];
-  let frame = 0;
-  let playing = false;
 
-  // size canvas properly for DPR
   function sizeCanvas() {
     const dpr = window.devicePixelRatio || 1;
-    const w = cvs.clientWidth;
-    const h = cvs.clientHeight;
-    cvs.width = w * dpr;
-    cvs.height = h * dpr;
+    const w = cvs.clientWidth, h = cvs.clientHeight;
+    cvs.width = w * dpr; cvs.height = h * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-  sizeCanvas();
-  window.addEventListener('resize', sizeCanvas);
+  sizeCanvas(); window.addEventListener("resize", sizeCanvas);
 
   function drawField() {
-    const w = cvs.width, h = cvs.height;
-    ctx.fillStyle = '#0a4f1a';
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillStyle = "#0a4f1a"; ctx.fillRect(0, 0, cvs.width, cvs.height);
+    ctx.strokeStyle = "rgba(255,255,255,0.25)";
     for (let i = 0; i <= 12; i++) {
-      const y = h - (i / 12) * h;
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
+      const y = cvs.height - (i / 12) * cvs.height;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cvs.width, y); ctx.stroke();
     }
-    ctx.strokeRect(0, 0, w, h);
   }
 
-  function mapX(x) { return (x / FIELD_WID_YD) * cvs.width; }
-  function mapY(y) { return cvs.height - (y / FIELD_LEN_YD) * cvs.height; }
+  function mapX(x){ return (x/FIELD_WID_YD)*cvs.width; }
+  function mapY(y){ return cvs.height - (y/FIELD_LEN_YD)*cvs.height; }
 
-  async function loadData() {
+  async function loadData(){
     try {
-      const res = await fetch('drive_nfltelemetry.json');
-      const data = await res.json();
+      const r = await fetch("drive_nfltelemetry.json");
+      const data = await r.json();
       plays = data.plays;
       hud.textContent = `Loaded ${plays.length} play(s)`;
       drawFrame();
-    } catch (e) {
-      hud.textContent = 'Error loading data';
-      console.error(e);
+    } catch(err){
+      hud.textContent = "Failed to load dataset";
+      console.error(err);
     }
   }
 
-  function drawFrame() {
-    if (!plays.length) return;
+  function drawFrame(){
+    if(!plays.length) return;
     drawField();
-    const frameData = plays[0].frames[0];
-    const players = frameData.players || [];
-    const ball = frameData.ball;
-
-    players.forEach(p => {
+    const f = plays[0].frames[0];
+    (f.players||[]).forEach(p=>{
       ctx.beginPath();
-      ctx.arc(mapX(p.x), mapY(p.y), 5, 0, Math.PI * 2);
-      ctx.fillStyle = p.team === 'home' ? '#72b6e5' : '#ff9999';
+      ctx.arc(mapX(p.x), mapY(p.y), 6, 0, Math.PI*2);
+      ctx.fillStyle = p.team==="home" ? "#72b6e5" : "#ff8888";
       ctx.fill();
     });
-
-    if (ball) {
+    if(f.ball){
       ctx.beginPath();
-      ctx.arc(mapX(ball.x), mapY(ball.y), 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffd97a';
-      ctx.fill();
+      ctx.arc(mapX(f.ball.x), mapY(f.ball.y), 8, 0, Math.PI*2);
+      ctx.fillStyle="#ffd97a"; ctx.fill();
     }
   }
 
-  // Buttons
-  document.getElementById('play').onclick = () => { playing = true; animate(); };
-  document.getElementById('pause').onclick = () => { playing = false; };
-  document.getElementById('step').onclick = () => { drawFrame(); };
-
-  function animate() {
-    if (!playing) return;
-    drawFrame();
-    requestAnimationFrame(animate);
-  }
+  document.getElementById("play").onclick = ()=>{ drawFrame(); };
+  document.getElementById("pause").onclick = ()=>{};
+  document.getElementById("step").onclick = ()=>{ drawFrame(); };
 
   loadData();
 })();
