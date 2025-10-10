@@ -2,7 +2,7 @@
 (() => {
   // ---------- Constants / Field ----------
   const DEFAULT_DATA =
-    new URLSearchParams(location.search).get("data") || "drive_nfltelemetry.json";
+     "https://meekste10.github.io/gameview-demo/drive_nfltelemetry.json";
   const FPS = 10;
   const FIELD_LEN_YD = 120;      // full length incl. end zones
   const FIELD_WID_YD = 53.333;   // sideline-to-sideline
@@ -414,7 +414,7 @@
     trailsXY.clear(); trails3D.clear();
     hudXY.textContent="Loading…"; hud3D.textContent="Loading…";
 
-    fetch(DATA_URL, {cache:"no-store"})
+    fetch(`${DATA_URL}?t=${Date.now()}`, { cache: "no-store" })
       .then(r=>{
         if(!r.ok) throw new Error(`HTTP ${r.status} (${r.statusText})`);
         return r.text();
