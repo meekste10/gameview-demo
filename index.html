@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FunBall — Ball Telemetry Demo</title>
+<title>FunBall — Dual View (XY + Z Tilt)</title>
 <style>
 :root {
   --bg: #101820;
   --field1: #0b6623;
   --field2: #0a4f1a;
   --ball: #ffd97a;
+  --trail: rgba(255,217,122,0.15);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body {
@@ -18,52 +19,43 @@ body {
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   display: flex; flex-direction: column;
   align-items: center;
-  min-height: 100vh;
   justify-content: center;
+  min-height: 100vh;
 }
-h1 { font-size: 1.4rem; margin-bottom: 8px; }
-#canvasWrap {
-  border: 2px solid #333;
-  border-radius: 8px;
-  background: linear-gradient(90deg, var(--field1) 50%, var(--field2) 50%);
-  position: relative;
-  width: 95vw;
-  max-width: 800px;
-  aspect-ratio: 120 / 53.333; /* yards field aspect */
-}
-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-#hud {
-  margin-top: 10px;
-  opacity: 0.8;
-  font-size: 0.9rem;
-}
+h1 { margin: 10px 0; font-size: 1.4rem; }
+.view { border:2px solid #333; border-radius:8px; margin:8px 0; position:relative; }
+canvas { width:90vw; max-width:800px; height:auto; display:block; border-radius:6px; }
+#hud { margin-top:10px; font-size:0.9rem; opacity:.8; }
 </style>
 </head>
 <body>
-  <h1>🏈 FunBall — Ball Telemetry</h1>
-  <div id="canvasWrap">
-    <canvas id="funCanvas" width="1200" height="533"></canvas>
+  <h1>🏈 FunBall — Dual View</h1>
+
+  <div class="view">
+    <canvas id="canvasXY" width="1200" height="533"></canvas>
   </div>
-  <div id="hud">Loading...</div>
+  <div class="view">
+    <canvas id="canvasZ" width="1200" height="400"></canvas>
+  </div>
+
+  <div id="hud">Loading…</div>
 
 <script>
 (async () => {
   const hud = document.getElementById("hud");
-  const canvas = document.getElementById("funCanvas");
-  const ctx = canvas.getContext("2d");
+  const cvsXY = document.getElementById("canvasXY");
+  const cvsZ = document.getElementById("canvasZ");
+  const ctxXY = cvsXY.getContext("2d");
+  const ctxZ = cvsZ.getContext("2d");
 
-  // Load telemetry
+  // --- Load Telemetry ---
   let data;
   try {
     const res = await fetch("funball.json", {cache: "no-cache"});
     data = await res.json();
-  } catch (err) {
+  } catch (e) {
     hud.textContent = "❌ Could not load funball.json";
-    console.error(err);
+    console.error(e);
     return;
   }
 
@@ -72,34 +64,54 @@ canvas {
   const tick = 1000 / fps;
   let frame = 0;
 
-  // Draw helper
-  function drawBall(x, y, z) {
-    const w = canvas.width;
-    const h = canvas.height;
+  function drawBall2D(ctx, x, y, z) {
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
     const px = (x / 120) * w;
     const py = h - (y / 53.333) * h;
-    const radius = 8 + z * 4;
+    const r = 8 + z * 4;
+    ctx.fillStyle = "var(--trail)";
+    ctx.beginPath(); ctx.arc(px, py, r*2.5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "var(--ball)";
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+  }
 
-    // Trail
-    ctx.fillStyle = "rgba(255,217,122,0.15)";
+  function drawBall3D(ctx, x, y, z) {
+    const w = ctx.canvas.width;
+    const h = ctx.canvas.height;
+    // Basic perspective projection (simple tilt)
+    const scale = 8;
+    const px = (x / 120) * w;
+    const py = h - ((y + z * scale) / 53.333) * h;
+
+    const r = 8 + z * 4;
+    const gradient = ctx.createRadialGradient(px, py, r*0.2, px, py, r);
+    gradient.addColorStop(0, "#fff6b0");
+    gradient.addColorStop(1, "#ff9a00");
+
+    ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(px, py, radius * 2.5, 0, Math.PI * 2);
+    ctx.arc(px, py, r, 0, Math.PI * 2);
     ctx.fill();
 
-    // Main ball
-    ctx.fillStyle = "var(--ball)";
+    // Optional shadow
+    const shadowY = h - (y / 53.333) * h;
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
     ctx.beginPath();
-    ctx.arc(px, py, radius, 0, Math.PI * 2);
+    ctx.ellipse(px, shadowY, r*1.3, r*0.5, 0, 0, Math.PI*2);
     ctx.fill();
   }
 
   function drawFrame() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctxXY.clearRect(0, 0, cvsXY.width, cvsXY.height);
+    ctxZ.clearRect(0, 0, cvsZ.width, cvsZ.height);
+
     const f = frames[frame];
-    if (!f) return;
+    if (!f || !f.ball) return;
 
     const { x, y, z } = f.ball;
-    drawBall(x, y, z);
+    drawBall2D(ctxXY, x, y, z);
+    drawBall3D(ctxZ, x, y, z);
 
     hud.textContent = `Frame ${frame + 1}/${frames.length} — t=${f.time_s.toFixed(2)}s`;
     frame = (frame + 1) % frames.length;
@@ -110,7 +122,7 @@ canvas {
     setTimeout(loop, tick);
   }
 
-  hud.textContent = `✅ Loaded ${frames.length} frames`;
+  hud.textContent = `✅ Loaded ${frames.length} frames at ${fps} FPS`;
   loop();
 })();
 </script>
