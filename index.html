@@ -3,52 +3,91 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FunBall — Dual-View with Players</title>
+<title>🏈 FunBall — Dual View + Players</title>
 <style>
-:root {
-  --bg:#101820; --field1:#0b6623; --field2:#0a4f1a;
-  --ball:#ffd97a; --trail:rgba(255,217,122,0.15);
-  --home:#72b6e5; --away:#ff6a6a;
-}
+:root { --bg:#0b0f14; --fg:#fff; --panel:#141c23; --field1:#0b6623; --field2:#0a4f1a; }
 *{box-sizing:border-box;margin:0;padding:0}
-body{
-  background:var(--bg);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh
-}
-h1{margin:10px 0;font-size:1.4rem}
-.view{border:2px solid #333;border-radius:8px;margin:8px 0;position:relative}
-canvas{width:90vw;max-width:800px;height:auto;display:block;border-radius:6px}
-#hud{margin-top:10px;font-size:0.9rem;opacity:.8}
+body{background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+-webkit-font-smoothing:antialiased;text-align:center;padding:10px}
+h1{font-size:20px;margin:8px 0}
+canvas{background:var(--field1);border:2px solid #222;border-radius:6px;width:95%;max-width:800px;height:auto;aspect-ratio:16/9;margin:6px auto;display:block}
+button{background:#72b6e5;color:#000;border:none;border-radius:4px;padding:4px 10px;margin:2px;font-weight:600;cursor:pointer}
+button:hover{opacity:.85}
+#hud{margin-top:8px;font-size:14px;opacity:.9}
 </style>
 </head>
+
 <body>
 <h1>🏈 FunBall — Dual View + Players</h1>
 
-<div class="view"><canvas id="canvasXY" width="1200" height="533"></canvas></div>
-<div class="view"><canvas id="canvasZ"  width="1200" height="400"></canvas></div>
-<div id="hud">Loading…</div>
+<!-- Top-Down -->
+<canvas id="canvasXY" width="960" height="540"></canvas>
 
-<<script>
+<!-- Tilted / Z Follow -->
+<canvas id="canvasZ" width="960" height="540"></canvas>
+
+<!-- HUD (status + controls will appear here) -->
+<div id="hud">Loading …</div>
+
+<!-- Main Simulation Script -->
+<script>
 (async()=>{
-  const hud=document.getElementById("hud");
   const cvsXY=document.getElementById("canvasXY");
   const cvsZ=document.getElementById("canvasZ");
   const ctxXY=cvsXY.getContext("2d");
   const ctxZ=cvsZ.getContext("2d");
+  const hud=document.getElementById("hud");
 
-  // ---- Load ----
+  // === Themes ===
+  const themes = {
+    normal:  {fill:["#fff6b0","#ff9a00"],trail:"#ffb400"},
+    flaming: {fill:["#ffcc00","#ff3300"],trail:"#ff6600"},
+    toystory:{fill:["#ffd000","#7dd0ff"],trail:"#72b6e5"},
+    pink:    {fill:["#ffd6ec","#ff5fa2"],trail:"#ff90c2"},
+    spiky:   {fill:["#ffffff","#b0b0b0"],trail:"#ffffff"}
+  };
+  let currentTheme="flaming";
+
+  // === Theme Buttons ===
+  const ctrl=document.createElement("div");
+  ctrl.style.cssText="display:flex;gap:6px;margin:8px 0;justify-content:center;flex-wrap:wrap;";
+  for(const t in themes){
+    const btn=document.createElement("button");
+    btn.textContent=t;
+    btn.onclick=()=>{currentTheme=t;};
+    ctrl.appendChild(btn);
+  }
+  hud.insertAdjacentElement("beforebegin",ctrl);
+
+  // === Load JSON Data ===
   let data;
   try{
     const res=await fetch("funball_play.json",{cache:"no-cache"});
     data=await res.json();
-  }catch(e){hud.textContent="❌ Could not load funball_play.json";console.error(e);return;}
-
+  }catch(e){
+    hud.textContent="❌ Error loading funball_play.json";
+    console.error(e);
+    return;
+  }
   const frames=data.frames||[];
-  const fps=data.fps||10;
-  const tick=1000/fps;
-  let frame=0;
+  const FPS=data.fps||10;
+  const TICK=1000/FPS;
 
-  // ---- Draw helpers ----
+  // === State ===
+  let frame=0;
+  let trail=[];
+  let caught=false;
+  const FIELD_LEN=120, FIELD_WID=53.333;
+  const followMargin=20;
+
+  // === Helper Functions ===
+  function yardToPix(x,y,z,ctx,mode="XY",followX=0){
+    const w=ctx.canvas.width, h=ctx.canvas.height;
+    const px=((x-followX+followMargin)/FIELD_LEN)*w;
+    const py=mode==="XY"?h-(y/FIELD_WID)*h:h-((y+z*8)/FIELD_WID)*h;
+    return [px,py];
+  }
+
   function drawField(ctx){
     const w=ctx.canvas.width,h=ctx.canvas.height;
     const g=ctx.createLinearGradient(0,0,0,h);
@@ -58,58 +97,74 @@ canvas{width:90vw;max-width:800px;height:auto;display:block;border-radius:6px}
     ctx.fillRect(0,0,w,h);
   }
 
-  function drawPlayers(ctx, players, mode="XY"){
+  function drawPlayers(ctx,players,mode="XY",followX=0){
     if(!players) return;
     for(const p of players){
-      const x=p.x,y=p.y,z=p.z||0;
-      const w=ctx.canvas.width,h=ctx.canvas.height;
-      const px=(x/120)*w;
-      const py=mode==="XY"?h-(y/53.333)*h:h-((y+z*8)/53.333)*h;
-      const r=4+(z*1.5);
+      const [px,py]=yardToPix(p.x,p.y,p.z||0,ctx,mode,followX);
       ctx.fillStyle=p.team==="home"?"#72b6e5":"#ff6a6a";
-      ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fill();
     }
   }
 
-  function drawBall(ctx,x,y,z,mode="XY"){
-    const w=ctx.canvas.width,h=ctx.canvas.height;
-    const px=(x/120)*w;
-    const py=mode==="XY"?h-(y/53.333)*h:h-((y+z*8)/53.333)*h;
-    const r=8+z*2;
-
-    if(mode==="Z"){
-      const shadowY=h-(y/53.333)*h;
-      ctx.fillStyle="rgba(0,0,0,0.25)";
-      ctx.beginPath();ctx.ellipse(px,shadowY,r*1.3,r*0.5,0,0,Math.PI*2);ctx.fill();
+  function drawTrail(ctx,trail,mode,followX){
+    const theme=themes[currentTheme];
+    ctx.strokeStyle=theme.trail;
+    ctx.lineWidth=2;ctx.globalAlpha=0.6;
+    ctx.beginPath();
+    for(let i=0;i<trail.length;i++){
+      const b=trail[i];
+      const [px,py]=yardToPix(b.x,b.y,b.z,ctx,mode,followX);
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
     }
+    ctx.stroke();ctx.globalAlpha=1;
+  }
 
-    const grad=ctx.createRadialGradient(px,py,r*0.2,px,py,r);
-    grad.addColorStop(0,"#fff6b0");
-    grad.addColorStop(1,"#ff9a00");
+  function drawBall(ctx,ball,mode="XY",followX=0){
+    const theme=themes[currentTheme];
+    const [px,py]=yardToPix(ball.x,ball.y,ball.z,ctx,mode,followX);
+    const r=6+ball.z*1.3;
+    if(mode==="Z"){
+      const shadowY=yardToPix(ball.x,ball.y,0,ctx,mode,followX)[1];
+      ctx.fillStyle="rgba(0,0,0,0.25)";
+      ctx.beginPath();ctx.ellipse(px,shadowY,r*1.4,r*0.4,0,0,Math.PI*2);ctx.fill();
+    }
+    const grad=ctx.createRadialGradient(px,py,1,px,py,r);
+    grad.addColorStop(0,theme.fill[0]);
+    grad.addColorStop(1,theme.fill[1]);
     ctx.fillStyle=grad;
     ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();
   }
 
-  function drawFrame(){
-    ctxXY.clearRect(0,0,cvsXY.width,cvsXY.height);
-    ctxZ.clearRect(0,0,cvsZ.width,cvsZ.height);
-    drawField(ctxXY);
-    drawField(ctxZ);
+  function detectCatch(ball,players){
+    const wr=players.find(p=>p.id==="WR1");
+    if(!wr) return false;
+    const dx=ball.x-wr.x,dy=ball.y-wr.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    return dist<1.5 && ball.z<1.5;
+  }
 
+  // === Main Draw Loop ===
+  function draw(){
     const f=frames[frame];
-    if(!f||!f.ball) return;
-    const {x,y,z}=f.ball;
-    drawPlayers(ctxXY,f.players,"XY");
-    drawPlayers(ctxZ,f.players,"Z");
-    drawBall(ctxXY,x,y,z,"XY");
-    drawBall(ctxZ,x,y,z,"Z");
+    if(!f) return;
+    const {ball,players}=f;
+    const followX=Math.max(0,ball.x-followMargin);
+    trail.push({...ball});
+    if(trail.length>20) trail.shift();
+    if(!caught && detectCatch(ball,players)) caught=true;
 
-    hud.textContent=`Frame ${frame+1}/${frames.length} • t=${f.time_s.toFixed(2)}s`;
+    for(const ctx of [ctxXY,ctxZ]){
+      drawField(ctx);
+      drawTrail(ctx,trail,ctx===ctxXY?"XY":"Z",followX);
+      drawPlayers(ctx,players,ctx===ctxXY?"XY":"Z",followX);
+      drawBall(ctx,ball,ctx===ctxXY?"XY":"Z",followX);
+    }
+    hud.textContent=`Frame ${frame+1}/${frames.length} • t=${f.time_s.toFixed(2)}s • ${currentTheme}`;
     frame=(frame+1)%frames.length;
   }
 
-  function loop(){drawFrame();setTimeout(loop,tick);}
-  hud.textContent=`✅ Loaded ${frames.length} frames`;
+  function loop(){draw();setTimeout(loop,TICK);}
+  hud.textContent=`✅ FunBall ready (${frames.length} frames)`;
   loop();
 })();
 </script>
