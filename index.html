@@ -3,170 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🏈 FunBall — Dual View + Players</title>
+<title>FunBall v3 — Split Screen</title>
 <style>
-:root { --bg:#0b0f14; --fg:#fff; --panel:#141c23; --field1:#0b6623; --field2:#0a4f1a; }
+:root { --bg:#0e1620; --fg:#fff; --panel:#16202a; --line:#2c3946; --accent:#72b6e5; --accent2:#ffd97a; --field:#0a4f1a; }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
--webkit-font-smoothing:antialiased;text-align:center;padding:10px}
-h1{font-size:20px;margin:8px 0}
-canvas{background:var(--field1);border:2px solid #222;border-radius:6px;width:95%;max-width:800px;height:auto;aspect-ratio:16/9;margin:6px auto;display:block}
-button{background:#72b6e5;color:#000;border:none;border-radius:4px;padding:4px 10px;margin:2px;font-weight:600;cursor:pointer}
-button:hover{opacity:.85}
-#hud{margin-top:8px;font-size:14px;opacity:.9}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+header,footer{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+footer{border-top:1px solid var(--line);border-bottom:none;opacity:.8;font-size:13px;justify-content:center}
+main{max-width:1200px;margin:0 auto;padding:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px}
+.canvas-wrap{background:var(--field);border:2px solid var(--line);border-radius:6px;display:flex;justify-content:center;align-items:center}
+canvas{width:100%;height:auto;aspect-ratio:16/9;display:block;border-radius:4px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;background:var(--panel);padding:8px 10px;border-radius:6px}
+button,select{cursor:pointer}
+button{background:var(--accent);color:#000;border:none;border-radius:6px;font-weight:700;padding:6px 10px;transition:opacity .2s}
+button:hover{opacity:.9}
+select{background:#1e2830;color:#fff;border:1px solid #44505c;border-radius:6px;padding:5px 6px;font-size:13px}
+.hud{font:12px/1.4 system-ui;text-align:center;margin-top:6px;opacity:.9}
+.badge{background:var(--accent);color:#000;font-weight:600;padding:4px 8px;border-radius:10px;font-size:12px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
-
 <body>
-<h1>🏈 FunBall — Dual View + Players</h1>
+<header>
+  <strong>FunBall v3 — Real Telemetry (Split Screen)</strong>
+  <span class="badge">Live</span>
+</header>
 
-<!-- Top-Down -->
-<canvas id="canvasXY" width="960" height="540"></canvas>
+<main>
+  <div class="grid">
+    <section class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong>Top-Down (XY)</strong><small style="opacity:.7">true field scale</small>
+      </div>
+      <div class="canvas-wrap"><canvas id="topDown" width="960" height="540"></canvas></div>
+      <div id="hudXY" class="hud">Loading…</div>
+    </section>
 
-<!-- Tilted / Z Follow -->
-<canvas id="canvasZ" width="960" height="540"></canvas>
+    <section class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong>Follow Cam (3D)</strong><small style="opacity:.7">auto-follows ball</small>
+      </div>
+      <div class="canvas-wrap"><canvas id="follow3D" width="960" height="540"></canvas></div>
+      <div id="hud3D" class="hud">Loading…</div>
+    </section>
+  </div>
 
-<!-- HUD (status + controls will appear here) -->
-<div id="hud">Loading …</div>
+  <div class="controls">
+    <button id="play">▶</button>
+    <button id="pause">⏸</button>
+    <button id="step">⏭</button>
 
-<!-- Main Simulation Script -->
-<script>
-(async()=>{
-  const cvsXY=document.getElementById("canvasXY");
-  const cvsZ=document.getElementById("canvasZ");
-  const ctxXY=cvsXY.getContext("2d");
-  const ctxZ=cvsZ.getContext("2d");
-  const hud=document.getElementById("hud");
+    <select id="datasetSel" style="min-width:260px">
+      <option value="kaggle_play_2017090700_20170907000118.json">kaggle_play_2017090700_20170907000118.json</option>
+      <option value="drive_nfltelemetry.json">drive_nfltelemetry.json</option>
+      <option value="gv-telemetry-v1.json">gv-telemetry-v1.json</option>
+    </select>
+    <button id="reload">Reload</button>
+  </div>
+</main>
 
-  // === Themes ===
-  const themes = {
-    normal:  {fill:["#fff6b0","#ff9a00"],trail:"#ffb400"},
-    flaming: {fill:["#ffcc00","#ff3300"],trail:"#ff6600"},
-    toystory:{fill:["#ffd000","#7dd0ff"],trail:"#72b6e5"},
-    pink:    {fill:["#ffd6ec","#ff5fa2"],trail:"#ff90c2"},
-    spiky:   {fill:["#ffffff","#b0b0b0"],trail:"#ffffff"}
-  };
-  let currentTheme="flaming";
+<footer>Auto axis/origin detection • DPR-safe sizing • Ball trail • Nearest 6 players</footer>
 
-  // === Theme Buttons ===
-  const ctrl=document.createElement("div");
-  ctrl.style.cssText="display:flex;gap:6px;margin:8px 0;justify-content:center;flex-wrap:wrap;";
-  for(const t in themes){
-    const btn=document.createElement("button");
-    btn.textContent=t;
-    btn.onclick=()=>{currentTheme=t;};
-    ctrl.appendChild(btn);
-  }
-  hud.insertAdjacentElement("beforebegin",ctrl);
-
-  // === Load JSON Data ===
-  let data;
-  try{
-    const res=await fetch("funball_play.json",{cache:"no-cache"});
-    data=await res.json();
-  }catch(e){
-    hud.textContent="❌ Error loading funball_play.json";
-    console.error(e);
-    return;
-  }
-  const frames=data.frames||[];
-  const FPS=data.fps||10;
-  const TICK=1000/FPS;
-
-  // === State ===
-  let frame=0;
-  let trail=[];
-  let caught=false;
-  const FIELD_LEN=120, FIELD_WID=53.333;
-  const followMargin=20;
-
-  // === Helper Functions ===
-  function yardToPix(x,y,z,ctx,mode="XY",followX=0){
-    const w=ctx.canvas.width, h=ctx.canvas.height;
-    const px=((x-followX+followMargin)/FIELD_LEN)*w;
-    const py=mode==="XY"?h-(y/FIELD_WID)*h:h-((y+z*8)/FIELD_WID)*h;
-    return [px,py];
-  }
-
-  function drawField(ctx){
-    const w=ctx.canvas.width,h=ctx.canvas.height;
-    const g=ctx.createLinearGradient(0,0,0,h);
-    g.addColorStop(0,"#0b6623");
-    g.addColorStop(1,"#0a4f1a");
-    ctx.fillStyle=g;
-    ctx.fillRect(0,0,w,h);
-  }
-
-  function drawPlayers(ctx,players,mode="XY",followX=0){
-    if(!players) return;
-    for(const p of players){
-      const [px,py]=yardToPix(p.x,p.y,p.z||0,ctx,mode,followX);
-      ctx.fillStyle=p.team==="home"?"#72b6e5":"#ff6a6a";
-      ctx.beginPath();ctx.arc(px,py,3,0,Math.PI*2);ctx.fill();
-    }
-  }
-
-  function drawTrail(ctx,trail,mode,followX){
-    const theme=themes[currentTheme];
-    ctx.strokeStyle=theme.trail;
-    ctx.lineWidth=2;ctx.globalAlpha=0.6;
-    ctx.beginPath();
-    for(let i=0;i<trail.length;i++){
-      const b=trail[i];
-      const [px,py]=yardToPix(b.x,b.y,b.z,ctx,mode,followX);
-      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
-    }
-    ctx.stroke();ctx.globalAlpha=1;
-  }
-
-  function drawBall(ctx,ball,mode="XY",followX=0){
-    const theme=themes[currentTheme];
-    const [px,py]=yardToPix(ball.x,ball.y,ball.z,ctx,mode,followX);
-    const r=6+ball.z*1.3;
-    if(mode==="Z"){
-      const shadowY=yardToPix(ball.x,ball.y,0,ctx,mode,followX)[1];
-      ctx.fillStyle="rgba(0,0,0,0.25)";
-      ctx.beginPath();ctx.ellipse(px,shadowY,r*1.4,r*0.4,0,0,Math.PI*2);ctx.fill();
-    }
-    const grad=ctx.createRadialGradient(px,py,1,px,py,r);
-    grad.addColorStop(0,theme.fill[0]);
-    grad.addColorStop(1,theme.fill[1]);
-    ctx.fillStyle=grad;
-    ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();
-  }
-
-  function detectCatch(ball,players){
-    const wr=players.find(p=>p.id==="WR1");
-    if(!wr) return false;
-    const dx=ball.x-wr.x,dy=ball.y-wr.y;
-    const dist=Math.sqrt(dx*dx+dy*dy);
-    return dist<1.5 && ball.z<1.5;
-  }
-
-  // === Main Draw Loop ===
-  function draw(){
-    const f=frames[frame];
-    if(!f) return;
-    const {ball,players}=f;
-    const followX=Math.max(0,ball.x-followMargin);
-    trail.push({...ball});
-    if(trail.length>20) trail.shift();
-    if(!caught && detectCatch(ball,players)) caught=true;
-
-    for(const ctx of [ctxXY,ctxZ]){
-      drawField(ctx);
-      drawTrail(ctx,trail,ctx===ctxXY?"XY":"Z",followX);
-      drawPlayers(ctx,players,ctx===ctxXY?"XY":"Z",followX);
-      drawBall(ctx,ball,ctx===ctxXY?"XY":"Z",followX);
-    }
-    hud.textContent=`Frame ${frame+1}/${frames.length} • t=${f.time_s.toFixed(2)}s • ${currentTheme}`;
-    frame=(frame+1)%frames.length;
-  }
-
-  function loop(){draw();setTimeout(loop,TICK);}
-  hud.textContent=`✅ FunBall ready (${frames.length} frames)`;
-  loop();
-})();
-</script>
+<script src="funball_v3.js"></script>
 </body>
 </html>
