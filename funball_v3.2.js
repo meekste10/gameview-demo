@@ -1,8 +1,12 @@
-/* FunBall v3.2 — Dual-View + Players • Safari-safe + Kaggle-compatible */
+/* FunBall v3.2 — Repo-Aware Data Loader */
 (()=>{
 // ---------- Constants ----------
-const DEFAULT_DATA = new URLSearchParams(location.search).get('data')
-  || (document.getElementById('datasetSel')?.value || 'kaggle_play_2017090700_20170907000118.json');
+const REPO_BASE = 'https://meekste10.github.io/gameview-demo/';
+const paramData = new URLSearchParams(location.search).get('data');
+const dropdownDefault = document.getElementById('datasetSel')?.value;
+const DEFAULT_DATA = paramData
+  ? (paramData.startsWith('http') ? paramData : REPO_BASE + paramData)
+  : (dropdownDefault ? REPO_BASE + dropdownDefault : REPO_BASE + 'drive_nfltelemetry_long.json');
 
 const FPS_DEFAULT = 10;
 const FIELD_LEN_YD = 100;
