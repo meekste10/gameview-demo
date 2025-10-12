@@ -39,7 +39,7 @@ canvas{width:90vw;max-width:800px;height:auto;display:block;border-radius:6px}
   // ---- Load ----
   let data;
   try{
-    const res=await fetch("funball.json",{cache:"no-cache"});
+    const res=await fetch("funball_play.json",{cache:"no-cache"});
     data=await res.json();
   }catch(e){hud.textContent="❌ Could not load funball.json";console.error(e);return;}
 
