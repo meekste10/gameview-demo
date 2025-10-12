@@ -28,7 +28,7 @@ canvas{width:90vw;max-width:800px;height:auto;display:block;border-radius:6px}
 <div class="view"><canvas id="canvasZ"  width="1200" height="400"></canvas></div>
 <div id="hud">Loading…</div>
 
-<script>
+<<script>
 (async()=>{
   const hud=document.getElementById("hud");
   const cvsXY=document.getElementById("canvasXY");
@@ -41,7 +41,7 @@ canvas{width:90vw;max-width:800px;height:auto;display:block;border-radius:6px}
   try{
     const res=await fetch("funball_play.json",{cache:"no-cache"});
     data=await res.json();
-  }catch(e){hud.textContent="❌ Could not load funball.json";console.error(e);return;}
+  }catch(e){hud.textContent="❌ Could not load funball_play.json";console.error(e);return;}
 
   const frames=data.frames||[];
   const fps=data.fps||10;
@@ -51,9 +51,10 @@ canvas{width:90vw;max-width:800px;height:auto;display:block;border-radius:6px}
   // ---- Draw helpers ----
   function drawField(ctx){
     const w=ctx.canvas.width,h=ctx.canvas.height;
-    ctx.fillStyle=ctx.createLinearGradient(0,0,w,0);
-    ctx.fillStyle.addColorStop?.(0,"var(--field1)");
-    ctx.fillStyle.addColorStop?.(1,"var(--field2)");
+    const g=ctx.createLinearGradient(0,0,0,h);
+    g.addColorStop(0,"#0b6623");
+    g.addColorStop(1,"#0a4f1a");
+    ctx.fillStyle=g;
     ctx.fillRect(0,0,w,h);
   }
 
@@ -64,8 +65,8 @@ canvas{width:90vw;max-width:800px;height:auto;display:block;border-radius:6px}
       const w=ctx.canvas.width,h=ctx.canvas.height;
       const px=(x/120)*w;
       const py=mode==="XY"?h-(y/53.333)*h:h-((y+z*8)/53.333)*h;
-      const r=4+(z*2);
-      ctx.fillStyle=p.team==="home"?"var(--home)":"var(--away)";
+      const r=4+(z*1.5);
+      ctx.fillStyle=p.team==="home"?"#72b6e5":"#ff6a6a";
       ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();
     }
   }
@@ -74,21 +75,17 @@ canvas{width:90vw;max-width:800px;height:auto;display:block;border-radius:6px}
     const w=ctx.canvas.width,h=ctx.canvas.height;
     const px=(x/120)*w;
     const py=mode==="XY"?h-(y/53.333)*h:h-((y+z*8)/53.333)*h;
-    const r=8+z*4;
+    const r=8+z*2;
 
-    // Shadow for tilt
     if(mode==="Z"){
       const shadowY=h-(y/53.333)*h;
       ctx.fillStyle="rgba(0,0,0,0.25)";
-      ctx.beginPath();ctx.ellipse(px,shadowY,r*1.4,r*0.5,0,0,Math.PI*2);ctx.fill();
+      ctx.beginPath();ctx.ellipse(px,shadowY,r*1.3,r*0.5,0,0,Math.PI*2);ctx.fill();
     }
 
-    // Trail + glow
-    ctx.fillStyle="var(--trail)";
-    ctx.beginPath();ctx.arc(px,py,r*2.5,0,Math.PI*2);ctx.fill();
-
     const grad=ctx.createRadialGradient(px,py,r*0.2,px,py,r);
-    grad.addColorStop(0,"#fff6b0"); grad.addColorStop(1,"#ff9a00");
+    grad.addColorStop(0,"#fff6b0");
+    grad.addColorStop(1,"#ff9a00");
     ctx.fillStyle=grad;
     ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);ctx.fill();
   }
@@ -96,7 +93,8 @@ canvas{width:90vw;max-width:800px;height:auto;display:block;border-radius:6px}
   function drawFrame(){
     ctxXY.clearRect(0,0,cvsXY.width,cvsXY.height);
     ctxZ.clearRect(0,0,cvsZ.width,cvsZ.height);
-    drawField(ctxXY); drawField(ctxZ);
+    drawField(ctxXY);
+    drawField(ctxZ);
 
     const f=frames[frame];
     if(!f||!f.ball) return;
