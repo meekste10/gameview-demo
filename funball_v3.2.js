@@ -1,11 +1,10 @@
-/* FunBall v3.1 — Split-screen ball + few players, Kaggle-compatible, smooth follow cam */
+/* FunBall v3.2 — Dual-View + Players • Safari-safe + Kaggle-compatible */
 (()=>{
 // ---------- Constants ----------
 const DEFAULT_DATA = new URLSearchParams(location.search).get('data')
   || (document.getElementById('datasetSel')?.value || 'kaggle_play_2017090700_20170907000118.json');
 
 const FPS_DEFAULT = 10;
-const TICK_MS_DEFAULT = 100;
 const FIELD_LEN_YD = 100;
 const FIELD_WID_YD = 53.333;
 const PAD = { x: 70, y: 40 };
@@ -29,47 +28,56 @@ const reloadBtn= document.getElementById('reload');
 let DATA_URL = DEFAULT_DATA;
 let frames = [];
 let fps = FPS_DEFAULT;
-let tickMS = TICK_MS_DEFAULT;
+let tickMS = 1000 / FPS_DEFAULT;
 let playing = false;
-let k = 0;
-let acc = 0, lastT = 0;
-
+let k = 0, acc = 0, lastT = 0;
 let unitScale = 1;
+
 let axis = { length:'y', lateral:'x', forwardSign:+1 };
 let camera = { x:0, y:50, z:6 };
 let trail = [];
 const TRAIL_MAX = 40;
 
-// Offscreen buffers
+// Offscreen buffers (Safari-safe)
 let bufXY=null, bxy=null, buf3D=null, b3d=null;
 
-// ---------- Utils ----------
+// ---------- Helpers ----------
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+
 function sizeCanvas(c){
   const dpr = window.devicePixelRatio || 1;
   const cssW = c.clientWidth || c.width;
   const cssH = c.clientHeight|| c.height;
   c.width = Math.round(cssW * dpr);
   c.height= Math.round(cssH * dpr);
-  c.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+  const ctx = c.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
 }
+
 function resizeAll(){
   [cvXY, cv3D].forEach(sizeCanvas);
-  bufXY = new OffscreenCanvas ? new OffscreenCanvas(cvXY.width, cvXY.height) : document.createElement('canvas');
-  if(!(bufXY instanceof OffscreenCanvas)) { bufXY.width=cvXY.width; bufXY.height=cvXY.height; }
-  bxy = bufXY.getContext('2d');
 
-  buf3D = new OffscreenCanvas ? new OffscreenCanvas(cv3D.width, cv3D.height) : document.createElement('canvas');
-  if(!(buf3D instanceof OffscreenCanvas)) { buf3D.width=cv3D.width; buf3D.height=cv3D.height; }
+  // ✅ Safari-safe offscreen buffer creation
+  if (typeof OffscreenCanvas === 'function') {
+    bufXY = new OffscreenCanvas(cvXY.width, cvXY.height);
+    buf3D = new OffscreenCanvas(cv3D.width, cv3D.height);
+  } else {
+    bufXY = document.createElement('canvas');
+    buf3D = document.createElement('canvas');
+    bufXY.width = cvXY.width; bufXY.height = cvXY.height;
+    buf3D.width = cv3D.width; buf3D.height = cv3D.height;
+  }
+
+  bxy = bufXY.getContext('2d');
   b3d = buf3D.getContext('2d');
 
   drawStatic();
   drawFrame(k,true);
 }
+
 new ResizeObserver(resizeAll).observe(cvXY);
 new ResizeObserver(resizeAll).observe(cv3D);
-
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const lerp=(a,b,t)=>a+(b-a)*t;
 
 // ---------- Adapter ----------
 function normalizeDataset(raw){
@@ -79,10 +87,9 @@ function normalizeDataset(raw){
   } else if (Array.isArray(raw?.frames)) {
     rawFrames = raw.frames;
   } else {
-    throw new Error('No frames found (expected plays[0].frames or frames)');
+    throw new Error('No frames found (expected plays[0].frames or frames[])');
   }
 
-  // ✅ Safe FPS + units handling
   fps = Number(raw?.fps) || FPS_DEFAULT;
   tickMS = 1000 / fps;
 
@@ -93,7 +100,6 @@ function normalizeDataset(raw){
   } catch(e){ units = 'yards'; }
   unitScale = units.toLowerCase().startsWith('m') ? (1/0.9144) : 1;
 
-  // Axis auto-detect
   const samp = rawFrames.slice(0, Math.min(20, rawFrames.length));
   const mins = {x:+Infinity,y:+Infinity}, maxs={x:-Infinity,y:-Infinity};
   for(const f of samp){
@@ -114,7 +120,6 @@ function normalizeDataset(raw){
     const bx = toWorldLateral(f.ball?.[axis.lateral] ?? 0);
     const by = toWorldForward (f.ball?.[axis.length ] ?? 0);
     const bz = toYd(f.ball?.z||0);
-
     const players = Array.isArray(f.players) ? f.players.map(p=>({
       id: String(p.id ?? ''),
       team: String(p.team ?? ''),
@@ -122,10 +127,8 @@ function normalizeDataset(raw){
       y: toWorldForward (p[axis.length ] ?? 0),
       z: toYd(p.z||0)
     })) : [];
-
     return { t, ball:{x:bx,y:by,z:bz}, players };
   });
-
   return nf;
 
   function toYd(v){ return (typeof v==='number'? v:0)*unitScale; }
@@ -162,8 +165,9 @@ function map3D_worldToCanvas(p){
   return { x: baseX, y: baseY - p.z*Z_PX };
 }
 
-// ---------- Static Field ----------
+// ---------- Field Background ----------
 function drawStatic(){
+  // XY
   bxy.clearRect(0,0,bufXY.width,bufXY.height);
   bxy.fillStyle='#0b4a18'; bxy.fillRect(0,0,bufXY.width,bufXY.height);
   const w=cvXY.width-PAD.x*2, h=cvXY.height-PAD.y*2;
@@ -173,6 +177,7 @@ function drawStatic(){
   bxy.stroke();
   bxy.strokeStyle='rgba(255,255,255,.7)'; bxy.strokeRect(PAD.x,PAD.y,w,h);
 
+  // 3D
   b3d.clearRect(0,0,buf3D.width,buf3D.height);
   b3d.fillStyle='#0c3f16'; b3d.fillRect(0,0,buf3D.width,buf3D.height);
 }
@@ -181,17 +186,15 @@ function drawStatic(){
 function step(n=1){
   if(!frames.length) return;
   k = Math.max(0, Math.min(frames.length-1, k+n));
-  drawFrame(k, true);
+  drawFrame(k);
 }
+
 function loop(t){
   if(!playing){ lastT=t; requestAnimationFrame(loop); return; }
   if(!lastT) lastT=t;
   let dt=t-lastT; lastT=t;
   acc+=dt;
-  while(acc >= tickMS){
-    step(1);
-    acc -= tickMS;
-  }
+  while(acc >= tickMS){ step(1); acc -= tickMS; }
   requestAnimationFrame(loop);
 }
 
@@ -205,6 +208,7 @@ function drawFrame(i){
   // XY
   cxXY.clearRect(0,0,cvXY.width,cvXY.height);
   cxXY.drawImage(bufXY,0,0);
+
   const mBallXY = mapXY_worldToCanvas(f.ball);
   cxXY.fillStyle = '#ffd97a';
   cxXY.beginPath(); cxXY.arc(mBallXY.x, mBallXY.y - f.ball.z*6, 3.5, 0, Math.PI*2); cxXY.fill();
@@ -219,38 +223,38 @@ function drawFrame(i){
   }
   cxXY.stroke();
 
+  // Players
   if(f.players?.length){
-    const withDist = f.players.map(p=>({p, d: Math.hypot(p.x-f.ball.x, p.y-f.ball.y)}))
-                              .sort((a,b)=>a.d-b.d).slice(0,6);
-    withDist.forEach(({p})=>{
+    const near = f.players.map(p=>({p,d:Math.hypot(p.x-f.ball.x,p.y-f.ball.y)}))
+                          .sort((a,b)=>a.d-b.d).slice(0,6);
+    near.forEach(({p})=>{
       const m=mapXY_worldToCanvas(p);
-      cxXY.strokeStyle = (p.team==='home')?'#cfe9fb':'#ffd0d0';
+      cxXY.strokeStyle=(p.team==='home')?'#cfe9fb':'#ffd0d0';
       cxXY.lineWidth=2;
-      cxXY.beginPath(); cxXY.moveTo(m.x, m.y-7); cxXY.lineTo(m.x, m.y-18); cxXY.stroke();
-      cxXY.beginPath(); cxXY.arc(m.x, m.y-22, 3, 0, Math.PI*2); cxXY.stroke();
+      cxXY.beginPath(); cxXY.moveTo(m.x,m.y-7); cxXY.lineTo(m.x,m.y-18); cxXY.stroke();
+      cxXY.beginPath(); cxXY.arc(m.x,m.y-22,3,0,Math.PI*2); cxXY.stroke();
     });
   }
-
-  hudXY.textContent = `Frame ${i+1}/${frames.length} • Ball (y=${f.ball.y.toFixed(1)} x=${f.ball.x.toFixed(1)})`;
+  hudXY.textContent=`Frame ${i+1}/${frames.length} • Ball (y=${f.ball.y.toFixed(1)}, x=${f.ball.x.toFixed(1)})`;
 
   // 3D
   refresh3DConstants();
   cx3D.clearRect(0,0,cv3D.width,cv3D.height);
   cx3D.drawImage(buf3D,0,0);
-  const plist = (f.players||[]).slice().sort((a,b)=>a.y-b.y);
+  const plist=(f.players||[]).slice().sort((a,b)=>a.y-b.y);
   plist.forEach(p=>{
     const m=map3D_worldToCanvas(p);
     cx3D.fillStyle='rgba(0,0,0,.28)';
-    cx3D.beginPath(); cx3D.ellipse(m.x, m.y+7, 8, 2.6, 0, 0, Math.PI*2); cx3D.fill();
+    cx3D.beginPath(); cx3D.ellipse(m.x,m.y+7,8,2.6,0,0,Math.PI*2); cx3D.fill();
     cx3D.strokeStyle=(p.team==='home')?'#cfe9fb':'#ffd0d0';
     cx3D.lineWidth=1.8;
-    cx3D.beginPath(); cx3D.moveTo(m.x, m.y-10); cx3D.lineTo(m.x, m.y-24); cx3D.stroke();
-    cx3D.beginPath(); cx3D.arc(m.x, m.y-28, 3, 0, Math.PI*2); cx3D.stroke();
+    cx3D.beginPath(); cx3D.moveTo(m.x,m.y-10); cx3D.lineTo(m.x,m.y-24); cx3D.stroke();
+    cx3D.beginPath(); cx3D.arc(m.x,m.y-28,3,0,Math.PI*2); cx3D.stroke();
   });
-  const mb3 = map3D_worldToCanvas(f.ball);
+  const mb3=map3D_worldToCanvas(f.ball);
   cx3D.fillStyle='#ffd97a';
-  cx3D.beginPath(); cx3D.arc(mb3.x, mb3.y, 4, 0, Math.PI*2); cx3D.fill();
-  hud3D.textContent = `Follow: Ball • Cam y≈${camera.y.toFixed(1)} x≈${camera.x.toFixed(1)}`;
+  cx3D.beginPath(); cx3D.arc(mb3.x,mb3.y,4,0,Math.PI*2); cx3D.fill();
+  hud3D.textContent=`Follow: Ball • Cam y≈${camera.y.toFixed(1)} x≈${camera.x.toFixed(1)}`;
 }
 
 // ---------- Load ----------
@@ -259,39 +263,32 @@ function loadJSON(url){
   hud3D.textContent='⏳ Loading…';
   playing=false; k=0; trail.length=0;
 
-  fetch(url, {cache:'no-cache'})
-    .then(r=>{
-      if(!r.ok) throw new Error(`HTTP ${r.status}`);
-      return r.json();
-    })
-    .then(raw=>{
-      frames = normalizeDataset(raw);
-      if(!frames.length) throw new Error('No frames after normalization');
-      camera.x = frames[0].ball.x;
-      camera.y = Math.max(0, frames[0].ball.y - 8);
-      resizeAll();
-      hudXY.textContent = `✅ Loaded ${frames.length} frame(s) @ ${fps} fps — tap ▶`;
-      hud3D.textContent = 'Follow: Ball';
-      drawFrame(0,true);
-    })
-    .catch(err=>{
-      hudXY.textContent = `❌ ${err.message}`;
-      hud3D.textContent = `❌ ${err.message}`;
-      console.error(err);
-    });
+  fetch(url,{cache:'no-cache'})
+  .then(r=>{ if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+  .then(raw=>{
+    frames=normalizeDataset(raw);
+    if(!frames.length) throw new Error('No frames after normalization');
+    camera.x=frames[0].ball.x; camera.y=Math.max(0,frames[0].ball.y-8);
+    resizeAll();
+    hudXY.textContent=`✅ Loaded ${frames.length} frame(s) @ ${fps} fps — tap ▶`;
+    hud3D.textContent='Follow: Ball';
+    drawFrame(0);
+  })
+  .catch(err=>{
+    console.error(err);
+    hudXY.textContent=`❌ ${err.message}`;
+    hud3D.textContent=`❌ ${err.message}`;
+  });
 }
 
 // ---------- UI ----------
-btnPlay && (btnPlay.onclick = ()=>{ if(frames.length){ playing=true; requestAnimationFrame(loop);} });
-btnPause&& (btnPause.onclick= ()=> playing=false);
-btnStep && (btnStep.onclick = ()=>{ playing=false; step(1); });
-if(dsSel) dsSel.value = DATA_URL;
-reloadBtn && (reloadBtn.onclick = ()=>{
-  DATA_URL = dsSel?.value || DEFAULT_DATA;
-  loadJSON(DATA_URL);
-});
+btnPlay && (btnPlay.onclick=()=>{ if(frames.length){ playing=true; requestAnimationFrame(loop);} });
+btnPause&& (btnPause.onclick=()=>playing=false);
+btnStep && (btnStep.onclick =()=>{ playing=false; step(1); });
+if(dsSel) dsSel.value=DATA_URL;
+reloadBtn && (reloadBtn.onclick=()=>{ DATA_URL=dsSel?.value||DEFAULT_DATA; loadJSON(DATA_URL); });
 
-// ---------- Start ----------
+// ---------- Init ----------
 resizeAll();
 loadJSON(DATA_URL);
 })();
