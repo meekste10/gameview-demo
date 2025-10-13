@@ -5,7 +5,7 @@
 (()=>{
 // ---------- Constants ----------
 const DEFAULT_DATA = new URLSearchParams(location.search).get('data')
-  || (document.getElementById('datasetSel')?.value || 'drive_nfltelemetry.json');
+  || (document.getElementById('datasetSel')?.value || 'drive_nfltelemetry_long.json');
 
 const FPS_DEFAULT = 10;
 const FIELD_LEN_YD = 100;
@@ -38,6 +38,7 @@ let tickMS = 1000 / FPS_DEFAULT;
 let playing = false;
 let k = 0, acc = 0, lastT = 0;
 let unitScale = 1;
+let cameraMode = 'follow'; // options: 'follow', 'stands50', 'stands20'
 
 let axis = { length:'y', lateral:'x' };
 
@@ -54,6 +55,18 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const map =(v,in0,in1,out0,out1)=>out0+(out1-out0)*((v-in0)/(in1-in0));
 
+function applyCameraPreset(mode) {
+  if (mode === 'stands50') {
+    cam3d.x = 0;  cam3d.y = 50; cam3d.z = 18;
+    cam3d.zoom = 1.0; cam3d.rot = 0;
+  } else if (mode === 'stands20') {
+    cam3d.x = 18; cam3d.y = 20; cam3d.z = 15;
+    cam3d.zoom = 1.0; cam3d.rot = -0.52; // about 30 degrees
+  } else { // follow (default)
+    cam3d.z = 6;
+  }
+}
+   
 function frameDt(i){
   if(i<=0) return 1/fps;
   const t0 = frames[i-1]?.t ?? ((i-1)/fps);
@@ -295,6 +308,7 @@ function drawFrame(i){
   refresh3DConstants();
   cx3D.clearRect(0,0,cv3D.clientWidth||cv3D.width, cv3D.clientHeight||cv3D.height);
   drawField3D();
+  if (cameraMode !== 'follow') applyCameraPreset(cameraMode);
 
   // Players (sort by forward depth so back renders first)
   const plist = (f.players||[]).slice().sort((a,b)=>a.y-b.y);
@@ -358,7 +372,13 @@ btnPause && (btnPause.onclick= ()=> playing=false);
 btnStep  && (btnStep.onclick = ()=>{ playing=false; step(1); });
 if(dsSel) dsSel.value = DATA_URL;
 reloadBtn && (reloadBtn.onclick=()=>{ DATA_URL=dsSel?.value||DEFAULT_DATA; loadJSON(DATA_URL); });
-
+const camSel = document.createElement('select');
+camSel.innerHTML = `
+  <option value="follow">Follow Cam</option>
+  <option value="stands50">50-Yard Stands</option>
+  <option value="stands20">20-Yard Stands</option>`;
+camSel.onchange = e => { cameraMode = e.target.value; drawFrame(k); };
+document.querySelector('.controls').appendChild(camSel);
 // keyboard
 window.addEventListener('keydown', (e)=>{
   if(e.code==='Space'){ e.preventDefault(); playing = !playing; if(playing) requestAnimationFrame(loop); }
